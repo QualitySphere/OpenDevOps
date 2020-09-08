@@ -1,4 +1,5 @@
 #!/bin/bash
+#set -ex
 COMPOSE_YAML='docker-compose.yaml'
 COMPOSE_PROJECT='odo'
 DOCKER_COMPOSE="docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT}"
@@ -68,11 +69,18 @@ function check_odo_svc
 ## Main
 check_env
 check_odo_cli
+check_odo_svc
 if [[ "${COMPOSE_CMD}" == "start" ]]; then
-    ${DOCKER_COMPOSE} pull "${COMPOSE_SVC}"
-    ${DOCKER_COMPOSE} up -d "${COMPOSE_SVC}"
+    ${DOCKER_COMPOSE} pull ${COMPOSE_SVC}
+    ${DOCKER_COMPOSE} up -d ${COMPOSE_SVC}
+    sleep 2
+    ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "stop" ]]; then
-    ${DOCKER_COMPOSE} down "${COMPOSE_SVC}"
+    ${DOCKER_COMPOSE} down ${COMPOSE_SVC}
+    sleep 2
+    ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "restart" ]]; then
-    ${DOCKER_COMPOSE} restart "${COMPOSE_SVC}"
+    ${DOCKER_COMPOSE} restart ${COMPOSE_SVC}
+    sleep 2
+    ${DOCKER_COMPOSE} ps
 fi
