@@ -51,8 +51,10 @@ function check_env
 
 function check_odo_cli
 {
-    echo "start stop restart" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
-    echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
+    echo "start stop restart list" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
+    [[ "${COMPOSE_CMD}" == "list" ]] || {
+        echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
+    }
 }
 
 function check_odo_svc
@@ -82,5 +84,7 @@ elif [[ "${COMPOSE_CMD}" == "stop" ]]; then
 elif [[ "${COMPOSE_CMD}" == "restart" ]]; then
     ${DOCKER_COMPOSE} restart ${COMPOSE_SVC}
     sleep 2
+    ${DOCKER_COMPOSE} ps
+elif [[ "${COMPOSE_CMD}" == "list" ]]; then
     ${DOCKER_COMPOSE} ps
 fi
