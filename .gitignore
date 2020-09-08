@@ -1,6 +1,6 @@
 .idea/
 odo-ldap/
-odo-ssp/
+#odo-ssp/
 odo-mysql/mysql/
 odo-jira/
 odo-conf/
