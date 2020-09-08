@@ -29,7 +29,7 @@ source_img="sonarqube:7.9-community"
 target_img="${registry}/${repo}/sonar:7.9"
 docker pull ${source_img} && docker tag ${source_img} ${target_img} && docker push ${target_img}
 
-source_img="rancher:v2.4.8"
+source_img="rancher/ancher:v2.4.8"
 target_img="${registry}/${repo}/rancher:2.4.8"
 docker pull ${source_img} && docker tag ${source_img} ${target_img} && docker push ${target_img}
 
