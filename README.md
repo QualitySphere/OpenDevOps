@@ -1,4 +1,16 @@
 # OpenDevOps
+###### This is ONLY for DevOps learning and practice. Please contact the software vendor to get the product license if you are a company.
+
+#### Quick Start
+
+```bash
+# 1. Git Clone
+git clone https://github.com/QualitySphere/OpenDevOps.git
+# 2. Change dir to ODO home
+cd OpenDevOps
+# 3. Start all ODO services
+./odoctl start all
+```
 
 #### Tool Chain
 
@@ -17,21 +29,6 @@ Harbor||||
 Rancher|17443|443|odo-rancher|/var/lib/rancher
 JumpServer|17080<br>2222|80<br>2222|odo-jms/data<br>odo-jms/mysql|/opt/jumpserver/data<br>/var/lib/mysql
 Portal|80<br>443|80<br>443||
-
-
-
-
-
-#### Quick Start
-
-```bash
-# 1. Git Clone
-./odoctl 
-# 2. Change dir to ODO home
-cd OpenDevOps
-# 3. Start all ODO services
-./odoctl start all
-```
 
 #### odoctl tool
 
