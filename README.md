@@ -21,5 +21,5 @@ Portal|80<br>443|80<br>443||
 #### ODO Dockerfiles
 
 - [Self Service Password](https://github.com/seoktaehyeon/docker-self-service-password/blob/1.3/Dockerfile)
-- [Jira Software](https://github.com/seoktaehyeon/docker-jira-software)
-- [Confluence Server](https://github.com/seoktaehyeon/docker-confluence-server)
+- [Jira Software](https://github.com/seoktaehyeon/docker-jira-software/blob/8.11/Dockerfile)
+- [Confluence Server](https://github.com/seoktaehyeon/docker-confluence-server/blob/7.5/Dockerfile)

@@ -1,8 +1,9 @@
 #!/bin/bash
 COMPOSE_YAML='docker-compose.yaml'
 COMPOSE_PROJECT='odo'
-COMPOSE_CMD="${1-""}"
-COMPOSE_SVC="${2-""}"
+DOCKER_COMPOSE="docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT}"
+COMPOSE_CMD="${1-''}"
+COMPOSE_SVC="${2-''}"
 
 function help_doc_cmd
 {
@@ -68,10 +69,10 @@ function check_odo_svc
 check_env
 check_odo_cli
 if [[ "${COMPOSE_CMD}" == "start" ]]; then
-    docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT} pull "${COMPOSE_SVC}"
-    docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT} up -d "${COMPOSE_SVC}"
+    ${DOCKER_COMPOSE} pull "${COMPOSE_SVC}"
+    ${DOCKER_COMPOSE} up -d "${COMPOSE_SVC}"
 elif [[ "${COMPOSE_CMD}" == "stop" ]]; then
-    docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT} down "${COMPOSE_SVC}"
+    ${DOCKER_COMPOSE} down "${COMPOSE_SVC}"
 elif [[ "${COMPOSE_CMD}" == "restart" ]]; then
-    docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT} restart "${COMPOSE_SVC}"
+    ${DOCKER_COMPOSE} restart "${COMPOSE_SVC}"
 fi
