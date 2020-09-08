@@ -15,7 +15,7 @@ services:
     volumes:
       - ./odo-ldap/db:/var/lib/ldap
       - ./odo-ldap/config:/etc/ldap
-    enironment:
+    environment:
       SLAPD_DOMAIN: qualitysphere.github.io
       SLAPD_PASSWORD: QualitySphere
 
@@ -30,7 +30,7 @@ services:
           memory: '512M'
     ports:
       - 18880:80
-    enironment:
+    environment:
       LDAP_SERVER_HOST: odo-openldap
 
   odo-ssp:
@@ -61,7 +61,7 @@ services:
     volumes:
       - ./odo-mysql/mysql:/var/lib/mysql
       - ./odo-mysql/docker.cnf:/etc/mysql/conf.d/docker.cnf
-    enironment:
+    environment:
       MYSQL_ROOT_PASSWORD: QualitySphere
 
   odo-jira:
