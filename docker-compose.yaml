@@ -94,7 +94,7 @@ services:
       - ./odo-conf:/var/atlassian/application-data/confluence
 
   odo-gitlab:
-    image: registry.cn-hangzhou.aliyuncs.com/bxwill/gitlab-ce
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/gitlab-ce:13.3.5
     container_name: odo-gitlab
     restart: always
     deploy:
@@ -127,7 +127,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   odo-sonar:
-    image: registry.cn-hangzhou.aliyuncs.com/bxwill/sonar
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/sonar:7.9
     container_name: odo-sonar
     restart: always
     deploy:
@@ -163,7 +163,7 @@ services:
 #      - ./odo-harbor/:/var/
 
   odo-rancher:
-    image: registry.cn-hangzhou.aliyuncs.com/bxwill/rancher:stable
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/rancher:2.4.8
     container_name: odo-rancher
     restart: always
     deploy:
