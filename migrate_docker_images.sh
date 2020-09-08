@@ -2,7 +2,7 @@
 #set -ex
 # ssp, jira-software, confluence-server NO NEED to migrate
 
-registry="registry.cn-hangzhou.aliyuncs.com/bxwill"
+registry="registry.cn-hangzhou.aliyuncs.com"
 repo="bxwill"
 
 source_img="dinkel/openldap:latest"
