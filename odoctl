@@ -16,7 +16,7 @@ $0 <COMMAND>:
     down      - Down all services
     restart   - Restart container(s) to restart service(s)
     list      - List container(s)
-    license   - Generate JIRA/Confluence license
+    license   - Generate JIRA/Confluence/Plugin license
 EOF
     exit 1
 }
@@ -47,9 +47,15 @@ function help_doc_license
     cat <<EOF
 $0 ${COMPOSE_CMD} <PRODUCT> [PRODUCT_ID]:
     jira          - Generate JIRA software license
-    jira_plugin   - Generate JIRA plugin license, plugin ID is required
-    conf          - Generate Confluence server license, server ID is required
-    conf_plugin   - Generate Confluence plugin license, plugin ID is required
+    jira_plugin   - Generate JIRA plugin license, PRODUCT_ID is REQUIRED
+                    jira_plugin's PRODUCT_ID is plugin ID
+                    find it from JIRA application detail page
+    conf          - Generate Confluence server license, PRODUCT_ID is REQUIRED
+                    conf's PRODUCT_ID is server ID
+                    find it from Confluence installation page
+    conf_plugin   - Generate Confluence plugin license, PRODUCT_ID is REQUIRED
+                    conf_plugin's PRODUCT_ID is plugin ID
+                    find it from Confluence application detail page
 EOF
     exit 1
 }
@@ -117,19 +123,35 @@ function chmod_dir
     chmod -R 777 odo-jenkins
 }
 
+function set_host_for_sonar
+{
+    [[ "$(uname)" == "Linux" ]] && {
+        sysctl -w vm.max_map_count=262144
+        sysctl -w fs.file-max=65536
+        ulimit -n 65536
+        ulimit -u 4096
+    }
+}
+
 ## Main
 check_env
 check_odo_cli
 check_odo_svc
 if [[ "${COMPOSE_CMD}" == "start" ]]; then
+    if [[ "${COMPOSE_SVC}" == "" ]]; then
+        set_host_for_sonar
+    else
+        echo "${COMPOSE_SVC}" | grep "sonar" && set_host_for_sonar
+    fi
     ${DOCKER_COMPOSE} pull ${COMPOSE_SVC}
     ${DOCKER_COMPOSE} up -d ${COMPOSE_SVC}
-    echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
-    echo "${COMPOSE_SVC}" | grep "jenkins" && chmod_dir odo-jenkins
-    [[ "${COMPOSE_SVC}" == "" ]] && {
+    if [[ "${COMPOSE_SVC}" == "" ]]; then
         chmod_dir odo-jenkins
         create_db_for_odo
-    }
+    else
+        echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
+        echo "${COMPOSE_SVC}" | grep "jenkins" && chmod_dir odo-jenkins
+    fi
     sleep 2
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "stop" ]]; then

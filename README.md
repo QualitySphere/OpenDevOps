@@ -36,10 +36,11 @@ Portal|80<br>443|80<br>443||
 ```bash
 ./odoctl <COMMAND>:
     start     - Up container(s) to start service(s)
-    stop      - Down container(s) to stop service(s)
+    stop      - Stop container(s) to stop service(s)
+    down      - Down all services
     restart   - Restart container(s) to restart service(s)
     list      - List container(s)
-    license   - Generate JIRA/Confluence license
+    license   - Generate JIRA/Confluence/Plugin license
 ```
 
 - service
@@ -54,7 +55,6 @@ Portal|80<br>443|80<br>443||
     sonar     - SonarQube Community Edition
     jenkins   - Jenkins
     gitlab    - GitLab Community Edition
-    harbor    - Harbor
     rancher   - Rancher
     jms       - JumpServer
 ```
@@ -68,10 +68,20 @@ Portal|80<br>443|80<br>443||
 ```bash
 ./odoctl license <PRODUCT> [PRODUCT_ID]:
     jira          - Generate JIRA software license
-    jira_plugin   - Generate JIRA plugin license, plugin ID is required
-    conf          - Generate Confluence server license, server ID is required
-    conf_plugin   - Generate Confluence plugin license, plugin ID is required
+    jira_plugin   - Generate JIRA plugin license, PRODUCT_ID is REQUIRED
+                    jira_plugin's PRODUCT_ID is plugin ID
+                    find it from JIRA application detail page
+    conf          - Generate Confluence server license, PRODUCT_ID is REQUIRED
+                    conf's PRODUCT_ID is server ID
+                    find it from Confluence installation page
+    conf_plugin   - Generate Confluence plugin license, PRODUCT_ID is REQUIRED
+                    conf_plugin's PRODUCT_ID is plugin ID
+                    find it from Confluence application detail page
 ```
+
+- what is server ID or product ID
+
+
 
 #### ODO Dockerfiles
 
