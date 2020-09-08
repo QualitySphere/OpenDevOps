@@ -5,6 +5,7 @@ COMPOSE_PROJECT='odo'
 DOCKER_COMPOSE="docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT}"
 COMPOSE_CMD="${1-''}"
 COMPOSE_SVC="${2-''}"
+PRODUCT_ID="${3}"
 
 function help_doc_cmd
 {
@@ -13,6 +14,8 @@ $0 <COMMAND>:
     start     - Up container(s) to start service(s)
     stop      - Down container(s) to stop service(s)
     restart   - Restart container(s) to restart service(s)
+    list      - List container(s)
+    license   - Generate JIRA/Confluence license
 EOF
     exit 1
 }
@@ -37,6 +40,18 @@ EOF
     exit 1
 }
 
+function help_doc_license
+{
+    cat <<EOF
+$0 ${COMPOSE_CMD} <PRODUCT> [PRODUCT_ID]:
+    jira          - Generate JIRA software license
+    jira_plugin   - Generate JIRA plugin license, plugin ID is required
+    conf          - Generate Confluence server license, server ID is required
+    conf_plugin   - Generate Confluence plugin license, plugin ID is required
+EOF
+    exit 1
+}
+
 function check_env
 {
     for _tool in "docker" "docker-compose"
@@ -51,10 +66,16 @@ function check_env
 
 function check_odo_cli
 {
-    echo "start stop restart list" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
-    [[ "${COMPOSE_CMD}" == "list" ]] || {
+    echo "start stop restart list license" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
+    if [[ "${COMPOSE_CMD}" == "license" ]]; then
+        echo "jira jira_plugin conf conf_plugin" | grep -qw "${COMPOSE_SVC}" || help_doc_license
+        [[ "${COMPOSE_SVC}" != "jira" ]] && [[ -z "${PRODUCT_ID}" ]] && help_doc_license
+    elif [[ "${COMPOSE_CMD}" == "list" ]]; then
+        return 0
+    else
         echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
-    }
+    fi
+    return 0
 }
 
 function check_odo_svc
@@ -64,7 +85,7 @@ function check_odo_svc
     elif [[ "${COMPOSE_SVC}" == "ldap" ]]; then
         COMPOSE_SVC="odo-openldap odo-phpldapadmin"
     else
-        COMPOSE_SVC="odo-${COMPOSE_SVC}"
+        [[ "${COMPOSE_CMD}" == "license" ]] || COMPOSE_SVC="odo-${COMPOSE_SVC}"
     fi
 }
 
@@ -87,4 +108,14 @@ elif [[ "${COMPOSE_CMD}" == "restart" ]]; then
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "list" ]]; then
     ${DOCKER_COMPOSE} ps
+elif [[ "${COMPOSE_CMD}" == "license" ]]; then
+    if [[ "${COMPOSE_SVC}" == "jira" ]]; then
+        docker exec -it odo-jira getJiraLicense
+    elif [[ "${COMPOSE_SVC}" == "jira_plugin" ]]; then
+        docker exec -it odo-jira getPluginLicense ${PRODUCT_ID}
+    elif [[ "${COMPOSE_SVC}" == "conf" ]]; then
+        docker exec -it odo-jira getConfLicense ${PRODUCT_ID}
+    elif [[ "${COMPOSE_SVC}" == "conf_plugin" ]]; then
+        docker exec -it odo-jira getPluginLicense ${PRODUCT_ID}
+    fi
 fi
