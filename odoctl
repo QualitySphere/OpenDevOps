@@ -12,7 +12,8 @@ function help_doc_cmd
     cat <<EOF
 $0 <COMMAND>:
     start     - Up container(s) to start service(s)
-    stop      - Down container(s) to stop service(s)
+    stop      - Stop container(s) to stop service(s)
+    down      - Down all services
     restart   - Restart container(s) to restart service(s)
     list      - List container(s)
     license   - Generate JIRA/Confluence license
@@ -73,6 +74,8 @@ function check_odo_cli
         [[ "${COMPOSE_SVC}" != "jira" ]] && [[ -z "${PRODUCT_ID}" ]] && help_doc_license
     elif [[ "${COMPOSE_CMD}" == "list" ]]; then
         return 0
+    elif [[ "${COMPOSE_CMD}" == "down" ]]; then
+        return 0
     else
 #        echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
         echo "all ldap ssp mysql jira conf sonar jenkins gitlab rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
@@ -127,6 +130,8 @@ elif [[ "${COMPOSE_CMD}" == "restart" ]]; then
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "list" ]]; then
     ${DOCKER_COMPOSE} ps
+elif [[ "${COMPOSE_CMD}" == "down" ]]; then
+    ${DOCKER_COMPOSE} down
 elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     if [[ "${COMPOSE_SVC}" == "jira" ]]; then
         docker exec -it odo-jira getJiraLicense
