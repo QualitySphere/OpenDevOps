@@ -1,0 +1,21 @@
+[client]
+default-character-set = utf8mb4
+[mysqld]
+default-storage-engine=INNODB
+character_set_server=utf8mb4
+innodb_default_row_format=DYNAMIC
+innodb_large_prefix=ON
+innodb_file_format=Barracuda
+innodb_log_file_size=2G
+sql_mode=ONLY_FULL_GROUP_BY,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+
+transaction-isolation=READ-COMMITTED
+binlog_format=row
+max_allowed_packet = 56M
+
+innodb_buffer_pool_size = 1024M
+innodb_log_file_size = 256M
+query_cache_size = 16M
+query_cache_type = 1
+max_connections = 200
+skip_ssl

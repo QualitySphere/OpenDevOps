@@ -1,0 +1,12 @@
+.idea/
+odo-ldap/
+odo-ssp/
+odo-mysql/mysql/
+odo-jira/
+odo-conf/
+odo-gitlab/
+odo-jenkins/
+odo-sonar/data/
+odo-sonar/logs/
+odo-sonar/extensions/
+

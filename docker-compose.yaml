@@ -1,0 +1,212 @@
+version: "3"
+services:
+
+  odo-openldap:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/openldap
+    container_name: odo-openldap
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '1G'
+    ports:
+      - 18389:389
+    volumes:
+      - ./odo-ldap/db:/var/lib/ldap
+      - ./odo-ldap/config:/etc/ldap
+    enironment:
+      SLAPD_DOMAIN: qualitysphere.github.io
+      SLAPD_PASSWORD: QualitySphere
+
+  odo-phpldapadmin:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/phpldapadmin
+    container_name: odo-phpldapadmin
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '512M'
+    ports:
+      - 18880:80
+    enironment:
+      LDAP_SERVER_HOST: odo-openldap
+
+  odo-ssp:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/ssp:1.3
+    container_name: odo-phpldapadmin
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '512M'
+    ports:
+      - 18080:80
+    volumes:
+      - ./odo-ssp/config.inc.php:/var/www/html/conf/config.inc.php
+
+  odo-mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/mysql:5.7
+    container_name: odo-mysql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '4G'
+    ports:
+      - 18306:3306
+    volumes:
+      - ./odo-mysql/mysql:/var/lib/mysql
+      - ./odo-mysql/docker.cnf:/etc/mysql/conf.d/docker.cnf
+    enironment:
+      MYSQL_ROOT_PASSWORD: QualitySphere
+
+  odo-jira:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/jira-software:8.11
+    container_name: odo-jira
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '8G'
+    ports:
+      - 8080:8080
+    volumes:
+      - ./odo-jira:/var/atlassian/application-data/jira
+
+  odo-conf:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/confluence-server:7.5
+    container_name: odo-conf
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '8G'
+    ports:
+      - 8090:8090
+      - 8091:8091
+    volumes:
+      - ./odo-conf:/var/atlassian/application-data/confluence
+
+  odo-gitlab:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/gitlab-ce
+    container_name: odo-gitlab
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '8G'
+    ports:
+      - 12080:80
+      - 12443:443
+      - 222:222
+    volumes:
+      - ./odo-gitlab/data:/var/opt/gitlab
+      - ./odo-gitlab/config:/etc/gitlab
+
+  odo-jenkins:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/jenkins:blueocean
+    container_name: odo-jenkins
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '8G'
+    ports:
+      - 15080:8080
+      - 50000:50000
+    volumes:
+      - ./odo-jenkins/jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  odo-sonar:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/sonar
+    container_name: odo-sonar
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '4G'
+    ports:
+      - 9000:9000
+    environment:
+      SONARQUBE_JDBC_URL: "jdbc:postgresql://sq-postgres:5432/sonar"
+      SONARQUBE_JDBC_USERNAME: root
+      SONARQUBE_JDBC_PASSWORD: QualitySphere
+    volumes:
+      - ./odo-sonar/data:/opt/sonarqube/data
+      - ./odo-sonar/logs:/opt/sonarqube/logs
+      - ./odo-sonar/extensions:/opt/sonarqube/extensions
+      - ./odo-sonar/sonar.properties:/opt/sonarqube/conf/sonar.properties
+
+#  odo-harbor:
+#    image: registry.cn-hangzhou.aliyuncs.com/bxwill/harbor
+#    container_name: odo-harbor
+#    restart: always
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '2'
+#          memory: '8G'
+#    ports:
+#      - 18xxx:8080
+#      - 18xxx:50000
+#    volumes:
+#      - ./odo-harbor/:/var/
+
+  odo-rancher:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/rancher:stable
+    container_name: odo-rancher
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '8G'
+    ports:
+      - 17433:443
+    volumes:
+      - ./odo-rancher:/var/lib/rancher
+    environment:
+      CATTLE_SYSTEM_CATALOG: bundled
+      AUDIT_LEVEL: 3
+
+  odo-jms:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/jms_all:2.1.2
+    container_name: odo-jms
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '8G'
+    ports:
+      - 17080:80
+      - 2222:2222
+    volumes:
+      - ./odo-jms/data:/opt/jumpserver/data
+      - ./odo-jms/mysql:/var/lib/mysql
+    environment:
+      SECRET_KEY: UGFn28Pp09SiJr60OMXs8e7lAqhJa3O1ztK8tJhMB5Aq1XNF6g
+      BOOTSTRAP_TOKEN: KIaSh2O7JR8r6Q0m
+
+#  odo-portal:
+#    image: registry.cn-hangzhou.aliyuncs.com/bxwill/odo-portal
+#    container_name: odo-portal
+#    restart: always
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.2'
+#          memory: '512M'
+#    ports:
+#      - 80:80
+#      - 443:443
