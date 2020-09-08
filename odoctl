@@ -33,9 +33,10 @@ $0 ${COMPOSE_CMD} <SERVICE>:
     sonar     - SonarQube Community Edition
     jenkins   - Jenkins
     gitlab    - GitLab Community Edition
-    harbor    - Harbor
+    harbor    - Harbor [Not Support]
     rancher   - Rancher
     jms       - JumpServer
+    portal    - DevOps Portal [Not Support]
 EOF
     exit 1
 }
@@ -73,7 +74,8 @@ function check_odo_cli
     elif [[ "${COMPOSE_CMD}" == "list" ]]; then
         return 0
     else
-        echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
+#        echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
+        echo "all ldap ssp mysql jira conf sonar jenkins gitlab rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
     fi
     return 0
 }
