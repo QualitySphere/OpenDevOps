@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -ex
-registry="registry.cn-hangzhou.aliyuncs.com/bxwill/"
+# ssp, jira-software, confluence-server NO NEED to migrate
+
+registry="registry.cn-hangzhou.aliyuncs.com/bxwill"
 repo="bxwill"
 
 source_img="dinkel/openldap:latest"
@@ -11,14 +13,9 @@ source_img="dinkel/phpldapadmin:latest"
 target_img="${registry}/${repo}/phpldapadmin:latest"
 docker pull ${source_img} && docker tag ${source_img} ${target_img} && docker push ${target_img}
 
-#docker push ${registry}${repo}/ssp:1.3
-
 source_img="mysql:5.7"
 target_img="${registry}/${repo}/mysql:5.7"
 docker pull ${source_img} && docker tag ${source_img} ${target_img} && docker push ${target_img}
-
-#docker push ${registry}${repo}/jira-software:8.11
-#docker push ${registry}${repo}/confluence-server:7.5
 
 source_img="gitlab/gitlab-ce:13.3.5-ce.0"
 target_img="${registry}/${repo}/gitlab-ce:13.3.5"
