@@ -68,7 +68,7 @@ function check_env
 
 function check_odo_cli
 {
-    echo "start stop restart list license" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
+    echo "start stop down restart list license" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
     if [[ "${COMPOSE_CMD}" == "license" ]]; then
         echo "jira jira_plugin conf conf_plugin" | grep -qw "${COMPOSE_SVC}" || help_doc_license
         [[ "${COMPOSE_SVC}" != "jira" ]] && [[ -z "${PRODUCT_ID}" ]] && help_doc_license
@@ -96,9 +96,25 @@ function check_odo_svc
 
 function create_db_for_odo
 {
+    while true
+    do
+        sleep 1
+        docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'show full processlist;'" && break
+    done
     docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS jira DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
     docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS conf DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
     docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS sonar DEFAULT CHARSET utf8 COLLATE utf8_bin;'"
+}
+
+function chmod_dir
+{
+    dir_name=$1
+    while true
+    do
+        sleep 1
+        [[ -d ${dir_name} ]] && break
+    done
+    chmod -R 777 odo-jenkins
 }
 
 ## Main
@@ -108,20 +124,16 @@ check_odo_svc
 if [[ "${COMPOSE_CMD}" == "start" ]]; then
     ${DOCKER_COMPOSE} pull ${COMPOSE_SVC}
     ${DOCKER_COMPOSE} up -d ${COMPOSE_SVC}
-    echo "${COMPOSE_SVC}" | grep "mysql" && {
-        create_db_for_odo
-    }
-    echo "${COMPOSE_SVC}" | grep "jenkins" && {
-        chmod -R 777 odo-jenkins
-    }
+    echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
+    echo "${COMPOSE_SVC}" | grep "jenkins" && chmod_dir odo-jenkins
     [[ "${COMPOSE_SVC}" == "" ]] && {
-        chmod -R 777 odo-jenkins
+        chmod_dir odo-jenkins
         create_db_for_odo
     }
     sleep 2
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "stop" ]]; then
-    ${DOCKER_COMPOSE} down ${COMPOSE_SVC}
+    ${DOCKER_COMPOSE} stop ${COMPOSE_SVC}
     sleep 2
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "restart" ]]; then
@@ -132,6 +144,8 @@ elif [[ "${COMPOSE_CMD}" == "list" ]]; then
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "down" ]]; then
     ${DOCKER_COMPOSE} down
+    sleep 2
+    ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     if [[ "${COMPOSE_SVC}" == "jira" ]]; then
         docker exec -it odo-jira getJiraLicense
