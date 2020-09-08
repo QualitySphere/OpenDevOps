@@ -35,7 +35,7 @@ services:
 
   odo-ssp:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/ssp:1.3
-    container_name: odo-phpldapadmin
+    container_name: odo-ssp
     restart: always
     deploy:
       resources:
