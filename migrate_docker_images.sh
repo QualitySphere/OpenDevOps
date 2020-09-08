@@ -33,6 +33,6 @@ source_img="rancher:v2.4.8"
 target_img="${registry}/${repo}/rancher:2.4.8"
 docker pull ${source_img} && docker tag ${source_img} ${target_img} && docker push ${target_img}
 
-source_img="jumpserver/jms_all:2.1.2"
+source_img="jumpserver/jms_all:v2.1.2"
 target_img="${registry}/${repo}/jms_all:2.1.2"
 docker pull ${source_img} && docker tag ${source_img} ${target_img} && docker push ${target_img}
