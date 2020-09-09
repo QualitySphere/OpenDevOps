@@ -10,4 +10,5 @@ odo-jenkins/
 odo-sonar/data/
 odo-sonar/logs/
 odo-sonar/extensions/
-
+odo-jms/
+odo-rancher/

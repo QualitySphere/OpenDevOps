@@ -143,6 +143,7 @@ function chmod_dir
         [[ -d ${dir_name} ]] && break
     done
     chmod -R 777 odo-jenkins
+    chmod -R 777 odo-sonar
 }
 
 function set_host_for_sonar
