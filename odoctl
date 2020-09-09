@@ -28,7 +28,7 @@ $0 ${COMPOSE_CMD} <SERVICE>:
     all       - All Services
     ldap      - OpenLDAP and PhpLDAPAdmin
     ssp       - Self Service Password
-    mysql     - MySQL
+    pg        - PostgresQL
     jira      - Jira Software
     conf      - Confluence
     sonar     - SonarQube Community Edition
@@ -74,6 +74,10 @@ EOF
 
 function check_env
 {
+    [[ -f /etc/selinux/config ]] && {
+        [[ "$(getenforce)" == "Enforcing" ]] && setenforce 0
+        sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
+    }
     for _tool in "docker" "docker-compose"
     do
         output=$(${_tool} --version 2>&1) || {
@@ -96,7 +100,7 @@ function check_odo_cli
         return 0
     else
 #        echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
-        echo "all ldap ssp mysql jira conf sonar jenkins gitlab rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
+        echo "all ldap ssp pg jira conf sonar jenkins gitlab rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
     fi
     return 0
 }
@@ -117,11 +121,17 @@ function create_db_for_odo
     while true
     do
         sleep 1
-        docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'show full processlist;'" && break
+        #docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'show full processlist;'" && break
+        docker exec -it odo-pg psql -U postgres -l && break
     done
-    docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS jira DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
-    docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS conf DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
-    docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS sonar DEFAULT CHARSET utf8 COLLATE utf8_bin;'"
+    #docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS jira DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
+    #docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS conf DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
+    #docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS sonar DEFAULT CHARSET utf8 COLLATE utf8_bin;'"
+    db_list=$(docker exec -it odo-pg psql -U postgres -l)
+    for db_name in jira conf sonar
+    do
+        echo "${db_list}" | grep $db_name || docker exec -it odo-pg createdb -U postgres $db_name
+    done
 }
 
 function chmod_dir

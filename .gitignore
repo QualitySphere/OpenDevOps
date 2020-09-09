@@ -2,6 +2,7 @@
 odo-ldap/
 #odo-ssp/
 odo-mysql/mysql/
+odo-pg/
 odo-jira/
 odo-conf/
 odo-gitlab/
