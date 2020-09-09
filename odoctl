@@ -45,19 +45,31 @@ EOF
 function help_doc_license
 {
     cat <<EOF
-$0 ${COMPOSE_CMD} <PRODUCT> [PRODUCT_ID]:
+$0 ${COMPOSE_CMD} <PRODUCT>:
     jira          - Generate JIRA software license
-    jira_plugin   - Generate JIRA plugin license, PRODUCT_ID is REQUIRED
-                    jira_plugin's PRODUCT_ID is plugin ID
-                    find it from JIRA application detail page
-    conf          - Generate Confluence server license, PRODUCT_ID is REQUIRED
-                    conf's PRODUCT_ID is server ID
-                    find it from Confluence installation page
-    conf_plugin   - Generate Confluence plugin license, PRODUCT_ID is REQUIRED
-                    conf_plugin's PRODUCT_ID is plugin ID
-                    find it from Confluence application detail page
+    jira_plugin   - Generate JIRA plugin license
+    conf          - Generate Confluence server license
+    conf_plugin   - Generate Confluence plugin license
 EOF
     exit 1
+}
+
+function help_doc_license_pid
+{
+    cat <<EOF
+$0 ${COMPOSE_CMD} ${COMPOSE_SVC} <PRODUCT_ID>:
+    PRODUCT_ID is REQUIRED
+      +-------------+------------+------------------------------------+
+      | PRODUCT     | PRODUCT_ID | WHERE                              |
+      +-------------+------------+------------------------------------+
+      | jira_plugin | plugin ID  | JIRA application detail page       |
+      +-------------+------------+------------------------------------+
+      | conf        | server ID  | Confluence installation page       |
+      +-------------+------------+------------------------------------+
+      | conf_plugin | plugin ID  | Confluence application detail page |
+      +-------------+------------+------------------------------------+
+EOF
+    exit 0
 }
 
 function check_env
@@ -77,7 +89,7 @@ function check_odo_cli
     echo "start stop down restart list license" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
     if [[ "${COMPOSE_CMD}" == "license" ]]; then
         echo "jira jira_plugin conf conf_plugin" | grep -qw "${COMPOSE_SVC}" || help_doc_license
-        [[ "${COMPOSE_SVC}" != "jira" ]] && [[ -z "${PRODUCT_ID}" ]] && help_doc_license
+        [[ "${COMPOSE_SVC}" != "jira" ]] && [[ -z "${PRODUCT_ID}" ]] && help_doc_license_pid
     elif [[ "${COMPOSE_CMD}" == "list" ]]; then
         return 0
     elif [[ "${COMPOSE_CMD}" == "down" ]]; then
@@ -125,6 +137,7 @@ function chmod_dir
 
 function set_host_for_sonar
 {
+    chmod -R 777 odo-sonar
     [[ "$(uname)" == "Linux" ]] && {
         sysctl -w vm.max_map_count=262144
         sysctl -w fs.file-max=65536
@@ -174,8 +187,8 @@ elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     elif [[ "${COMPOSE_SVC}" == "jira_plugin" ]]; then
         docker exec -it odo-jira getPluginLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf" ]]; then
-        docker exec -it odo-jira getConfLicense ${PRODUCT_ID}
+        docker exec -it odo-conf getConfLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf_plugin" ]]; then
-        docker exec -it odo-jira getPluginLicense ${PRODUCT_ID}
+        docker exec -it odo-conf getPluginLicense ${PRODUCT_ID}
     fi
 fi

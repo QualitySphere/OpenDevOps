@@ -138,7 +138,7 @@ services:
     ports:
       - 9000:9000
     environment:
-      SONARQUBE_JDBC_URL: "jdbc:postgresql://sq-postgres:5432/sonar"
+      SONARQUBE_JDBC_URL: "jdbc:mysql://odo-mysql:3306/sonar"
       SONARQUBE_JDBC_USERNAME: root
       SONARQUBE_JDBC_PASSWORD: QualitySphere
     volumes:
