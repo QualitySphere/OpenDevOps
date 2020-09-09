@@ -173,7 +173,8 @@ if [[ "${COMPOSE_CMD}" == "start" ]]; then
         chmod_dir odo-jenkins
         create_db_for_odo
     else
-        echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
+        #echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
+        echo "${COMPOSE_SVC}" | grep "pg" && create_db_for_odo
         echo "${COMPOSE_SVC}" | grep "jenkins" && chmod_dir odo-jenkins
     fi
     sleep 2
