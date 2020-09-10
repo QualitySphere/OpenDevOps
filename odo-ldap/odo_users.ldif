@@ -13,6 +13,7 @@ dn: cn=odo,ou=users,dc=qualitysphere,dc=github,dc=io
 cn: odo
 uid: odo
 sn: odo
+displayName: Open DevOps
 mail: odo@QualitySphere.github.io
 userPassword: opendevops
 objectClass: inetOrgPerson
