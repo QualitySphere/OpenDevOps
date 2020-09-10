@@ -91,7 +91,7 @@ function check_env
 
 function check_odo_cli
 {
-    echo "start stop down restart list license" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
+    echo "start stop down restart list license cleanup" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
     if [[ "${COMPOSE_CMD}" == "license" ]]; then
         echo "jira jira_plugin conf conf_plugin" | grep -qw "${COMPOSE_SVC}" || help_doc_license
         [[ "${COMPOSE_SVC}" != "jira" ]] && [[ -z "${PRODUCT_ID}" ]] && help_doc_license_pid
