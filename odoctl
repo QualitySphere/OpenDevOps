@@ -123,12 +123,12 @@ function create_db_for_odo
     while true
     do
         sleep 1
-        #docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'show full processlist;'" && break
+        #docker exec -it odo-mysql bash -c "mysql -uroot -popendevops -e 'show full processlist;'" && break
         docker exec -it odo-pg psql -U postgres -l && break
     done
-    #docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS jira DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
-    #docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS conf DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
-    #docker exec -it odo-mysql bash -c "mysql -uroot -pQualitySphere -e 'CREATE DATABASE IF NOT EXISTS sonar DEFAULT CHARSET utf8 COLLATE utf8_bin;'"
+    #docker exec -it odo-mysql bash -c "mysql -uroot -popendevops -e 'CREATE DATABASE IF NOT EXISTS jira DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
+    #docker exec -it odo-mysql bash -c "mysql -uroot -popendevops -e 'CREATE DATABASE IF NOT EXISTS conf DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
+    #docker exec -it odo-mysql bash -c "mysql -uroot -popendevops -e 'CREATE DATABASE IF NOT EXISTS sonar DEFAULT CHARSET utf8 COLLATE utf8_bin;'"
     db_list=$(docker exec -it odo-pg psql -U postgres -l)
     for db_name in jira conf sonar
     do

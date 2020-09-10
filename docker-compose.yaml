@@ -17,7 +17,7 @@ services:
       - ./odo-ldap/config:/etc/ldap
     environment:
       SLAPD_DOMAIN: qualitysphere.github.io
-      SLAPD_PASSWORD: QualitySphere
+      SLAPD_PASSWORD: opendevops
 
   odo-ldap-phpldapadmin:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/phpldapadmin
@@ -62,7 +62,7 @@ services:
       - ./odo-pg:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: QualitySphere
+      POSTGRES_PASSWORD: opendevops
 
   odo-jira:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/jira-software:8.11
@@ -140,7 +140,7 @@ services:
     environment:
       SONARQUBE_JDBC_URL: "jdbc:postgresql://odo-pg:5432/sonar"
       SONARQUBE_JDBC_USERNAME: postgres
-      SONARQUBE_JDBC_PASSWORD: QualitySphere
+      SONARQUBE_JDBC_PASSWORD: opendevops
     volumes:
       - ./odo-sonar/data:/opt/sonarqube/data
       - ./odo-sonar/logs:/opt/sonarqube/logs
