@@ -17,6 +17,7 @@ $0 <COMMAND>:
     restart   - Restart container(s) to restart service(s)
     list      - List container(s)
     license   - Generate JIRA/Confluence/Plugin license
+    cleanup   - Cleanup all containers and dirs
 EOF
     exit 1
 }
@@ -95,6 +96,8 @@ function check_odo_cli
         echo "jira jira_plugin conf conf_plugin" | grep -qw "${COMPOSE_SVC}" || help_doc_license
         [[ "${COMPOSE_SVC}" != "jira" ]] && [[ -z "${PRODUCT_ID}" ]] && help_doc_license_pid
     elif [[ "${COMPOSE_CMD}" == "list" ]]; then
+        return 0
+    elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
         return 0
     elif [[ "${COMPOSE_CMD}" == "down" ]]; then
         return 0
@@ -203,4 +206,14 @@ elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     elif [[ "${COMPOSE_SVC}" == "conf_plugin" ]]; then
         docker exec -it odo-conf getPluginLicense ${PRODUCT_ID}
     fi
+elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
+    ${DOCKER_COMPOSE} down
+    sleep 2
+    ${DOCKER_COMPOSE} ps
+    [[ -f .gitignore ]] && {
+        for clean_dir in $(grep 'odo-' .gitignore | grep -v '#')
+        do
+            rm -rf ${clean_dir}
+        done
+    }
 fi
