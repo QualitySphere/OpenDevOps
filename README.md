@@ -8,8 +8,12 @@
 git clone https://github.com/QualitySphere/OpenDevOps.git
 # 2. Change dir to ODO home
 cd OpenDevOps
-# 3. Start all ODO services
-./odoctl start all
+# 3. Start ODO services
+./odoctl start ldap
+./odoctl start pg
+./odoctl start jira
+./odoctl start conf
+...
 ```
 
 #### Tool Chain
@@ -18,7 +22,7 @@ Service|Port|Container Port|Volume|Container Volume
 ----|----|----|----|----
 OpenLDAP|18389|389|odo-ldap/db<br>odo-ldap/config|/var/lig/ldap<br>/etc/ldap
 PHPLdapAdmin|18880|80|-|-
-Self Service Password|18080|80|odo-ssp/config.inc.php|/var/www/html/conf/config.inc.php
+Self Service Password|18080|80|odo-ldap/ssp/config.inc.php|/var/www/html/conf/config.inc.php
 MySQL|18306|3306|odo-mysql/mysql<br>odo-mysql/docker.cnf|/var/lib/mysql<br>/etc/mysql/conf.d/docker.cnf
 Jira|8080|8080|odo-jira|/var/atlassian/application-data/jira
 Confluence|8090<br>8091|8090<br>8091|odo-conf|/var/atlassian/application-data/confluence
@@ -41,15 +45,15 @@ Portal|80<br>443|80<br>443||
     restart   - Restart container(s) to restart service(s)
     list      - List container(s)
     license   - Generate JIRA/Confluence/Plugin license
+    cleanup   - Cleanup all containers and dirs
 ```
 
 - service
 ```bash
 ./odoctl start/stop/restart <SERVICE>:
     all       - All Services
-    ldap      - OpenLDAP and PhpLDAPAdmin
-    ssp       - Self Service Password
-    mysql     - MySQL
+    ldap      - OpenLDAP, PhpLDAPAdmin and Self Service Password
+    pg        - PostgresQL
     jira      - Jira Software
     conf      - Confluence
     sonar     - SonarQube Community Edition
@@ -66,21 +70,24 @@ Portal|80<br>443|80<br>443||
 
 - generate license
 ```bash
-./odoctl license <PRODUCT> [PRODUCT_ID]:
+./odoctl license <PRODUCT>:
     jira          - Generate JIRA software license
-    jira_plugin   - Generate JIRA plugin license, PRODUCT_ID is REQUIRED
-                    jira_plugin's PRODUCT_ID is plugin ID
-                    find it from JIRA application detail page
-    conf          - Generate Confluence server license, PRODUCT_ID is REQUIRED
-                    conf's PRODUCT_ID is server ID
-                    find it from Confluence installation page
-    conf_plugin   - Generate Confluence plugin license, PRODUCT_ID is REQUIRED
-                    conf_plugin's PRODUCT_ID is plugin ID
-                    find it from Confluence application detail page
+    jira_plugin   - Generate JIRA plugin license
+    conf          - Generate Confluence server license
+    conf_plugin   - Generate Confluence plugin license
+
+./odoctl license jira_plugin/conf/conf_plugin <PRODUCT_ID>:
+    PRODUCT_ID is REQUIRED
+      +-------------+------------+------------------------------------+
+      | PRODUCT     | PRODUCT_ID | WHERE                              |
+      +-------------+------------+------------------------------------+
+      | jira_plugin | plugin ID  | JIRA application detail page       |
+      +-------------+------------+------------------------------------+
+      | conf        | server ID  | Confluence installation page       |
+      +-------------+------------+------------------------------------+
+      | conf_plugin | plugin ID  | Confluence application detail page |
+      +-------------+------------+------------------------------------+
 ```
-
-- what is server ID or product ID
-
 
 
 #### ODO Dockerfiles

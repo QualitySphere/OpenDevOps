@@ -14,7 +14,7 @@ cn: odo
 uid: odo
 sn: odo
 mail: odo@QualitySphere.github.io
-userPassword: QualitySphere
+userPassword: opendevops
 objectClass: inetOrgPerson
 
 # Groups, OrgUnit
@@ -25,23 +25,23 @@ objectClass: organizationalUnit
 # jira-administrators, Group
 dn: cn=jira-administrators,ou=groups,dc=qualitysphere,dc=github,dc=io
 cn: jira-administrators
-uniqueMember: cn=odo, ou=users,dc=qualitysphere,dc=github,dc=io
+uniqueMember: cn=odo,ou=users,dc=qualitysphere,dc=github,dc=io
 objectClass: groupOfUniqueNames
 
 # jira-software-users, Group
 dn: cn=jira-software-users,ou=groups,dc=qualitysphere,dc=github,dc=io
 cn: jira-software-users
-uniqueMember: cn=odo, ou=users,dc=qualitysphere,dc=github,dc=io
+uniqueMember: cn=odo,ou=users,dc=qualitysphere,dc=github,dc=io
 objectClass: groupOfUniqueNames
 
 # confluence-administrators, Group
 dn: cn=confluence-administrators,ou=groups,dc=qualitysphere,dc=github,dc=io
 cn: confluence-administrators
-uniqueMember: cn=odo, ou=users,dc=qualitysphere,dc=github,dc=io
+uniqueMember: cn=odo,ou=users,dc=qualitysphere,dc=github,dc=io
 objectClass: groupOfUniqueNames
 
 # confluence-users, Group
 dn: cn=confluence-users,ou=groups,dc=qualitysphere,dc=github,dc=io
 cn: confluence-users
-uniqueMember: cn=odo, ou=users,dc=qualitysphere,dc=github,dc=io
+uniqueMember: cn=odo,ou=users,dc=qualitysphere,dc=github,dc=io
 objectClass: groupOfUniqueNames

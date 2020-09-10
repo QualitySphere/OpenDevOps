@@ -34,7 +34,7 @@
 $debug = false;
 
 # LDAP
-$ldap_url = "ldap://odo-openldap";
+$ldap_url = "ldap://odo-ldap-openldap";
 $ldap_starttls = false;
 $ldap_binddn = "cn=admin,dc=qualitysphere,dc=github,dc=io";
 $ldap_bindpw = "opendevops";

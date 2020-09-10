@@ -31,7 +31,7 @@ services:
     ports:
       - 18880:80
     environment:
-      LDAP_SERVER_HOST: odo-openldap
+      LDAP_SERVER_HOST: odo-ldap-openldap
 
   odo-ldap-ssp:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/ssp:1.3
