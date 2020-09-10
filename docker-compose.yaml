@@ -1,9 +1,9 @@
 version: "3"
 services:
 
-  odo-openldap:
+  odo-ldap-openldap:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/openldap
-    container_name: odo-openldap
+    container_name: odo-ldap-openldap
     restart: always
     deploy:
       resources:
@@ -19,9 +19,9 @@ services:
       SLAPD_DOMAIN: qualitysphere.github.io
       SLAPD_PASSWORD: QualitySphere
 
-  odo-phpldapadmin:
+  odo-ldap-phpldapadmin:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/phpldapadmin
-    container_name: odo-phpldapadmin
+    container_name: odo-ldap-phpldapadmin
     restart: always
     deploy:
       resources:
@@ -33,9 +33,9 @@ services:
     environment:
       LDAP_SERVER_HOST: odo-openldap
 
-  odo-ssp:
+  odo-ldap-ssp:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/ssp:1.3
-    container_name: odo-ssp
+    container_name: odo-ldap-ssp
     restart: always
     deploy:
       resources:
@@ -45,7 +45,7 @@ services:
     ports:
       - 18080:80
     volumes:
-      - ./odo-ssp/config.inc.php:/var/www/html/conf/config.inc.php
+      - ./odo-ldap/ssp/config.inc.php:/var/www/html/conf/config.inc.php
 
   odo-pg:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/postgres:10

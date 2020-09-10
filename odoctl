@@ -27,8 +27,7 @@ function help_doc_svc
     cat <<EOF
 $0 ${COMPOSE_CMD} <SERVICE>:
     all       - All Services
-    ldap      - OpenLDAP and PhpLDAPAdmin
-    ssp       - Self Service Password
+    ldap      - OpenLDAP, PhpLDAPAdmin and Self Service Password
     pg        - PostgresQL
     jira      - Jira Software
     conf      - Confluence
@@ -103,7 +102,7 @@ function check_odo_cli
         return 0
     else
 #        echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
-        echo "all ldap ssp pg jira conf sonar jenkins gitlab rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
+        echo "all ldap pg jira conf sonar jenkins gitlab rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
     fi
     return 0
 }
@@ -113,7 +112,7 @@ function check_odo_svc
     if [[ "${COMPOSE_SVC}" == "all" ]]; then
         COMPOSE_SVC=""
     elif [[ "${COMPOSE_SVC}" == "ldap" ]]; then
-        COMPOSE_SVC="odo-openldap odo-phpldapadmin"
+        COMPOSE_SVC="odo-ldap-openldap odo-ldap-phpldapadmin odo-ldap-ssp"
     else
         [[ "${COMPOSE_CMD}" == "license" ]] || COMPOSE_SVC="odo-${COMPOSE_SVC}"
     fi
@@ -135,6 +134,7 @@ function create_db_for_odo
     do
         echo "${db_list}" | grep $db_name || docker exec -it odo-pg createdb -U postgres $db_name
     done
+    docker exec -it odo-pg psql -U postgres -l
 }
 
 function chmod_dir

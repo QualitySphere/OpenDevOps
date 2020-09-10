@@ -1,0 +1,47 @@
+# Obsolete, OrgUnit
+dn: ou=obsolete,dc=qualitysphere,dc=github,dc=io
+ou: obsolete
+objectClass: organizationalUnit
+
+# Users, OrgUnit
+dn: ou=users,dc=qualitysphere,dc=github,dc=io
+ou: users
+objectClass: organizationalUnit
+
+# ODO, User
+dn: cn=odo,ou=users,dc=qualitysphere,dc=github,dc=io
+cn: odo
+uid: odo
+sn: odo
+mail: odo@QualitySphere.github.io
+userPassword: QualitySphere
+objectClass: inetOrgPerson
+
+# Groups, OrgUnit
+dn: ou=groups,dc=qualitysphere,dc=github,dc=io
+ou: groups
+objectClass: organizationalUnit
+
+# jira-administrators, Group
+dn: cn=jira-administrators,ou=groups,dc=qualitysphere,dc=github,dc=io
+cn: jira-administrators
+uniqueMember: cn=odo, ou=users,dc=qualitysphere,dc=github,dc=io
+objectClass: groupOfUniqueNames
+
+# jira-software-users, Group
+dn: cn=jira-software-users,ou=groups,dc=qualitysphere,dc=github,dc=io
+cn: jira-software-users
+uniqueMember: cn=odo, ou=users,dc=qualitysphere,dc=github,dc=io
+objectClass: groupOfUniqueNames
+
+# confluence-administrators, Group
+dn: cn=confluence-administrators,ou=groups,dc=qualitysphere,dc=github,dc=io
+cn: confluence-administrators
+uniqueMember: cn=odo, ou=users,dc=qualitysphere,dc=github,dc=io
+objectClass: groupOfUniqueNames
+
+# confluence-users, Group
+dn: cn=confluence-users,ou=groups,dc=qualitysphere,dc=github,dc=io
+cn: confluence-users
+uniqueMember: cn=odo, ou=users,dc=qualitysphere,dc=github,dc=io
+objectClass: groupOfUniqueNames
