@@ -1,20 +1,64 @@
 # OpenDevOps
 ###### This is ONLY for DevOps learning and practice. Please contact the software vendor to get the product license if you are a company.
 
+#### Framework
+
+![]()
+
 #### Quick Start
 
-```bash
-# 1. Git Clone
-git clone https://github.com/QualitySphere/OpenDevOps.git
-# 2. Change dir to ODO home
-cd OpenDevOps
-# 3. Start ODO services
-./odoctl start ldap
-./odoctl start pg
-./odoctl start jira
-./odoctl start conf
-...
-```
+##### Resource
+
+# | CPU | Memory 
+----|----|----
+Minimum | 4 core | 8 G
+Recommend | 8 core | 16 G
+Optimum | 16 core | 32 G
+
+##### Deployment
+
+1. Clone project <br>`git clone https://github.com/QualitySphere/OpenDevOps.git`
+2. Change dir to ODO home <br>`cd OpenDevOps`
+3. Start ODO services <br>`./odoctl start all`
+
+##### Configuration
+
+- OpenLDAP
+  - Access PHPLDAPAdmin `http://ODO-HOST:18880` and click `login` 
+  - Input `cn=admin,dc=qualitysphere,dc=github,dc=io` as Login DN and `opendevops` as Password, and then click `Authenticate` <br>![](doc/images/odo-ldap-01.png)
+  - Click `import` button and copy content from `odo-ldap/ssp/odo_users.ldif` into the text area <br>![](doc/images/odo-ldap-02.png)
+  - Click `Proceed` to complete OpenLDAP configuration <br>![](doc/images/odo-ldap-03.png)
+- Jira Software
+  - Access Jira Software `http://ODO-HOST:8080` and select `I'll set it up myself` <br>![](doc/images/odo-jira-01.png)
+  - Input database information<br>hostname can use container name `odo-pg`, DB name is `jira` and Pg default acount/password is `postgres/opendevops` <br> click `Test Connection` to check it <br>![](doc/images/odo-jira-02.png)
+  - Wait while the database is set up. This may take a minute. <br>Click `Next` to set up application properties. <br>![](doc/images/odo-jira-03.png)
+  - If there is a specify license key page. Go back to ODO-HOST server run `./odoctl license jira` <br>Copy generated license key and input the text area <br>![](doc/images/odo-jira-04.png)
+  - Click `Next` to complete Jira Software installation
+  - Create administrator account <br>![](doc/images/odo-jira-05.png)
+  - Click `Next` and then `Finish` Jira Software configuration
+- Confluence
+  - Access Confluence Server `http://ODO-HOST:8090` and click `Next`
+  - Get `Server ID` from license key page and then go back to ODO-HOST to run `./odoctl license conf <serverId>` to generate license key
+  - Copy the license key and active Confluence Server <br>![](doc/images/odo-conf-01.png)
+  - Select `My own database` and click `Next` <br>![](doc/images/odo-conf-02.png)
+  - Set up database <br>hostname can use container name `odo-pg`, DB name is `conf` and Pg default account/password is `postgres/opendevops` <br>Click `Test connection` to check data correction <br>![](doc/images/odo-conf-03.png)
+  - Click `Empty Site` to start configure user management <br>![](doc/images/odo-conf-04.png)
+  - Select `Manage users and groups within Confluence` and create administrator for Confluence <br>![](doc/images/odo-conf-05.png)
+  - Click `Next` to complete Confluence configuration
+- GitLab
+- Jenkins
+- SonarQube
+- Harbor
+- Rancher
+- JumpServer
+
+##### Usage
+
+- [LDAP Self Service Password]()
+- [Jira Software](https://docs.atlassian.com/jira/jsw-docs-0811/)
+- [Confluence]()
+- [GitLab]()
+- [GitLab]()
 
 #### Tool Chain
 
@@ -23,7 +67,7 @@ Service|Port|Container Port|Volume|Container Volume
 OpenLDAP|18389|389|odo-ldap/db<br>odo-ldap/config|/var/lig/ldap<br>/etc/ldap
 PHPLdapAdmin|18880|80|-|-
 Self Service Password|18080|80|odo-ldap/ssp/config.inc.php|/var/www/html/conf/config.inc.php
-MySQL|18306|3306|odo-mysql/mysql<br>odo-mysql/docker.cnf|/var/lib/mysql<br>/etc/mysql/conf.d/docker.cnf
+PostgresQL|18432|5432|odo-pg|/var/lib/postgresql/data
 Jira|8080|8080|odo-jira|/var/atlassian/application-data/jira
 Confluence|8090<br>8091|8090<br>8091|odo-conf|/var/atlassian/application-data/confluence
 GitLab|12080<br>12443<br>222|80<br>443<br>222|odo-gitlab/data<br>odo-gitlab/config|/var/opt/gitlab<br>/etc/gitlab
@@ -48,7 +92,7 @@ Portal|80<br>443|80<br>443||
     cleanup   - Cleanup all containers and dirs
 ```
 
-- service
+- services
 ```bash
 ./odoctl start/stop/restart <SERVICE>:
     all       - All Services
@@ -68,7 +112,7 @@ Portal|80<br>443|80<br>443||
 ./odoctl list
 ```
 
-- generate license
+- generate license for JIRA/Confluence
 ```bash
 ./odoctl license <PRODUCT>:
     jira          - Generate JIRA software license
@@ -89,6 +133,11 @@ Portal|80<br>443|80<br>443||
       +-------------+------------+------------------------------------+
 ```
 
+- **`DANGEROUS`** cleanup ODO services and dirs 
+
+```bash
+./odoctl cleanup
+```
 
 #### ODO Dockerfiles
 

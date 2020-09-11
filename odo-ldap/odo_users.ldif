@@ -35,6 +35,12 @@ cn: jira-software-users
 uniqueMember: cn=odo,ou=users,dc=qualitysphere,dc=github,dc=io
 objectClass: groupOfUniqueNames
 
+# jira-servicedesk-users, Group
+dn: cn=jira-servicedesk-users,ou=groups,dc=qualitysphere,dc=github,dc=io
+cn: jira-servicedesk-users
+uniqueMember: cn=odo,ou=users,dc=qualitysphere,dc=github,dc=io
+objectClass: groupOfUniqueNames
+
 # confluence-administrators, Group
 dn: cn=confluence-administrators,ou=groups,dc=qualitysphere,dc=github,dc=io
 cn: confluence-administrators
