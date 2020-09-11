@@ -1,34 +1,34 @@
 # OpenDevOps
 ###### This is ONLY for DevOps learning and practice. Please contact the software vendor to get the product license if you are a company.
 
-#### Framework
+## Framework
 
 ![]()
 
-#### Quick Start
+## Quick Start
 
-##### Resource
+#### Resource
 
-# | CPU | Memory 
+Type | CPU | Memory 
 ----|----|----
 Minimum | 4 core | 8 G
 Recommend | 8 core | 16 G
 Optimum | 16 core | 32 G
 
-##### Deployment
+#### Deployment
 
 1. Clone project <br>`git clone https://github.com/QualitySphere/OpenDevOps.git`
 2. Change dir to ODO home <br>`cd OpenDevOps`
 3. Start ODO services <br>`./odoctl start all`
 
-##### Configuration
+#### Configuration
 
-- OpenLDAP
+- **OpenLDAP**
   - Access PHPLDAPAdmin `http://ODO-HOST:18880` and click `login` 
   - Input `cn=admin,dc=qualitysphere,dc=github,dc=io` as Login DN and `opendevops` as Password, and then click `Authenticate` <br>![](doc/images/odo-ldap-01.png)
   - Click `import` button and copy content from `odo-ldap/ssp/odo_users.ldif` into the text area <br>![](doc/images/odo-ldap-02.png)
   - Click `Proceed` to complete OpenLDAP configuration <br>![](doc/images/odo-ldap-03.png)
-- Jira Software
+- **Jira** **Software**
   - Access Jira Software `http://ODO-HOST:8080` and select `I'll set it up myself` <br>![](doc/images/odo-jira-01.png)
   - Input database information<br>hostname can use container name `odo-pg`, DB name is `jira` and Pg default acount/password is `postgres/opendevops` <br> click `Test Connection` to check it <br>![](doc/images/odo-jira-02.png)
   - Wait while the database is set up. This may take a minute. <br>Click `Next` to set up application properties. <br>![](doc/images/odo-jira-03.png)
@@ -36,7 +36,7 @@ Optimum | 16 core | 32 G
   - Click `Next` to complete Jira Software installation
   - Create administrator account <br>![](doc/images/odo-jira-05.png)
   - Click `Next` and then `Finish` Jira Software configuration
-- Confluence
+- **Confluence**
   - Access Confluence Server `http://ODO-HOST:8090` and click `Next`
   - Get `Server ID` from license key page and then go back to ODO-HOST to run `./odoctl license conf <serverId>` to generate license key
   - Copy the license key and active Confluence Server <br>![](doc/images/odo-conf-01.png)
@@ -45,22 +45,26 @@ Optimum | 16 core | 32 G
   - Click `Empty Site` to start configure user management <br>![](doc/images/odo-conf-04.png)
   - Select `Manage users and groups within Confluence` and create administrator for Confluence <br>![](doc/images/odo-conf-05.png)
   - Click `Next` to complete Confluence configuration
-- GitLab
-- Jenkins
-- SonarQube
-- Harbor
-- Rancher
-- JumpServer
+- **GitLab**
+- **Jenkins**
+- **SonarQube**
+- **Harbor**
+- **Rancher**
+- **JumpServer**
 
-##### Usage
+#### Usage
 
 - [LDAP Self Service Password]()
 - [Jira Software](https://docs.atlassian.com/jira/jsw-docs-0811/)
-- [Confluence]()
+- [Confluence](https://docs.atlassian.com/confluence/docs-75/)
 - [GitLab]()
-- [GitLab]()
+- [Jenkins]()
+- [SonarQube]()
+- [Harbor]()
+- [Rancher]()
+- [JumpServer]()
 
-#### Tool Chain
+## Tool Chain
 
 Service|Port|Container Port|Volume|Container Volume
 ----|----|----|----|----
@@ -78,7 +82,7 @@ Rancher|17443|443|odo-rancher|/var/lib/rancher
 JumpServer|17080<br>2222|80<br>2222|odo-jms/data<br>odo-jms/mysql|/opt/jumpserver/data<br>/var/lib/mysql
 Portal|80<br>443|80<br>443||
 
-#### odoctl tool
+## odoctl 
 
 - commands
 ```bash
@@ -133,13 +137,13 @@ Portal|80<br>443|80<br>443||
       +-------------+------------+------------------------------------+
 ```
 
-- **`DANGEROUS`** cleanup ODO services and dirs 
+- cleanup ODO services and dirs 
 
 ```bash
 ./odoctl cleanup
 ```
 
-#### ODO Dockerfiles
+## ODO Dockerfiles
 
 - [Self Service Password](https://github.com/seoktaehyeon/docker-self-service-password/blob/1.3/Dockerfile)
 - [Jira Software](https://github.com/seoktaehyeon/docker-jira-software/blob/8.11/Dockerfile)

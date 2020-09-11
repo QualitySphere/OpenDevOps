@@ -207,6 +207,12 @@ elif [[ "${COMPOSE_CMD}" == "license" ]]; then
         docker exec -it odo-conf getPluginLicense ${PRODUCT_ID}
     fi
 elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
+    echo -e "\033[31;6m [ DANGER ] This action will wipe all ODO data\033[0m"
+    read -p "Do you really wanna do this? [N/y] " _CLEANUP
+    [[ "${_CLEANUP,,}" == 'y' ]] || {
+        echo "Abort cleanup"
+        exit 1
+    }
     ${DOCKER_COMPOSE} down
     sleep 2
     ${DOCKER_COMPOSE} ps
