@@ -3,7 +3,7 @@
 
 ## Framework
 
-![]()
+![](doc/images/odo-framework.png)
 
 ## Quick Start
 

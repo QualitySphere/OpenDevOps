@@ -16,7 +16,7 @@ update_ssp_html()
     element_id=${1?}
     element_href=${2?}
     if [ "${element_href}" != "" ]; then
-        sed -i "s#id='${element_id}'.*#id='${element_id} href='${element_href}'#g" ssp.html
+        sed -i "s#id='${element_id}'.*#id='${element_id}' href='${element_href}'#g" ssp.html
     fi
     return 0
 }
