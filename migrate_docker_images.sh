@@ -40,3 +40,6 @@ docker pull ${source_img} && docker tag ${source_img} ${target_img} && docker pu
 source_img="jumpserver/jms_all:v2.1.2"
 target_img="${registry}/${repo}/jms_all:2.1.2"
 docker pull ${source_img} && docker tag ${source_img} ${target_img} && docker push ${target_img}
+
+target_img="${registry}/${repo}/odo-portal:latest"
+cd odo-portal/dockerBuild && docker build -t ${target_img} . && docker push ${target_img}

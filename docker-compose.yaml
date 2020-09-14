@@ -198,15 +198,25 @@ services:
       SECRET_KEY: UGFn28Pp09SiJr60OMXs8e7lAqhJa3O1ztK8tJhMB5Aq1XNF6g
       BOOTSTRAP_TOKEN: KIaSh2O7JR8r6Q0m
 
-#  odo-portal:
-#    image: registry.cn-hangzhou.aliyuncs.com/bxwill/odo-portal
-#    container_name: odo-portal
-#    restart: always
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: '0.2'
-#          memory: '512M'
-#    ports:
-#      - 80:80
-#      - 443:443
+  odo-portal:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/odo-portal
+    container_name: odo-portal
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: '512M'
+    ports:
+      - 80:80
+      - 443:443
+#    environment:
+#      ODO_JIRA_URL: http://localhost:8080
+#      ODO_CONF_URL: http://localhost:8090
+#      ODO_SSP_URL: http://localhost:18080
+#      ODO_GITLAB_URL: http://localhost:12080
+#      ODO_HARBOR_URL: http://localhost
+#      ODO_SONAR_URL: http://localhost:9000
+#      ODO_JENKINS_URL: http://localhost:15080
+#      ODO_JMS_URL: http://localhost:17080
+#      ODO_RANCHER_URL: https://localhost:17443

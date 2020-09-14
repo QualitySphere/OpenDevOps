@@ -24,10 +24,14 @@ Optimum | 16 core | 32 G
 #### Configuration
 
 - **OpenLDAP**
-  - Access PHPLDAPAdmin `http://ODO-HOST:18880` and click `login` 
+  - Access phpLDAPadmin `http://ODO-HOST:18880` and click `login` 
   - Input `cn=admin,dc=qualitysphere,dc=github,dc=io` as Login DN and `opendevops` as Password, and then click `Authenticate` <br>![](doc/images/odo-ldap-01.png)
   - Click `import` button and copy content from `odo-ldap/ssp/odo_users.ldif` into the text area <br>![](doc/images/odo-ldap-02.png)
   - Click `Proceed` to complete OpenLDAP configuration <br>![](doc/images/odo-ldap-03.png)
+- **Self** **Service** **Password**
+  - Access Self Service Password `http://ODO-HOST:18080`
+  - Try to update default account `odo`'s password to validate SSP
+  - Try to update `odo`'s password via E-mail. <br>if you find there is no hostname in the reset password link, you can update `$reset_url` in `odo-ldap/ssp/config.inc.php`
 - **Jira** **Software**
   - Access Jira Software `http://ODO-HOST:8080` and select `I'll set it up myself` <br>![](doc/images/odo-jira-01.png)
   - Input database information<br>hostname can use container name `odo-pg`, DB name is `jira` and Pg default acount/password is `postgres/opendevops` <br> click `Test Connection` to check it <br>![](doc/images/odo-jira-02.png)
@@ -46,23 +50,28 @@ Optimum | 16 core | 32 G
   - Select `Manage users and groups within Confluence` and create administrator for Confluence <br>![](doc/images/odo-conf-05.png)
   - Click `Next` to complete Confluence configuration
 - **GitLab**
+  - Install 
+  - Update config
+  - Restart GitLab
 - **Jenkins**
 - **SonarQube**
+  - Access and install LDAP plugin
+  - Edit properties file to enable LDAP
+  - Restart SonarQube
 - **Harbor**
 - **Rancher**
 - **JumpServer**
 
-#### Usage
+#### Manual
 
-- [LDAP Self Service Password]()
 - [Jira Software](https://docs.atlassian.com/jira/jsw-docs-0811/)
 - [Confluence](https://docs.atlassian.com/confluence/docs-75/)
-- [GitLab]()
-- [Jenkins]()
-- [SonarQube]()
-- [Harbor]()
-- [Rancher]()
-- [JumpServer]()
+- [GitLab](https://docs.gitlab.com/ee/README.html)
+- [Jenkins](https://www.jenkins.io/zh/doc/book/blueocean/creating-pipelines/)
+- [SonarQube](https://docs.sonarqube.org/latest/)
+- [Harbor](https://goharbor.io/docs/2.0.0/working-with-projects/)
+- [Rancher](https://rancher.com/docs/rancher/v2.x/en/)
+- [JumpServer](https://docs.jumpserver.org/zh/master/admin-guide/quick_start/)
 
 ## Tool Chain
 

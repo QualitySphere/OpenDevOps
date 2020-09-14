@@ -37,7 +37,7 @@ $0 ${COMPOSE_CMD} <SERVICE>:
     harbor    - Harbor [Not Support]
     rancher   - Rancher
     jms       - JumpServer
-    portal    - DevOps Portal [Not Support]
+    portal    - DevOps Portal
 EOF
     exit 1
 }
@@ -101,8 +101,7 @@ function check_odo_cli
     elif [[ "${COMPOSE_CMD}" == "down" ]]; then
         return 0
     else
-#        echo "all ldap ssp mysql jira conf sonar jenkins gitlab harbor rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
-        echo "all ldap pg jira conf sonar jenkins gitlab rancher jms" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
+        echo "all ldap pg jira conf sonar jenkins gitlab rancher jms portal" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
     fi
     return 0
 }

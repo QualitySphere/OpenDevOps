@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Open DevOps Services</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container" style="margin-top: 10px;">
+        <div class="row clearfix">
+            <div class="col-md-12 column">
+                <nav class="navbar navbar-default" role="navigation">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse"
+                            data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle
+                                navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span
+                                class="icon-bar"></span></button> <a class="navbar-brand" href="#"
+                            target="_blank" style="color: black;">Open DevOps Services</a>
+                    </div>
+                    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                        <ul class="nav navbar-nav navbar-right">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown"> 使用手册 <strong
+                                        class="caret"></strong></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="ssp.html" target="_blank">如何自助修改密码</a>
+                                    </li>
+                                    <li><a href="https://docs.atlassian.com/jira/jsw-docs-0811/"
+                                            target="_blank">Jira Software</a>
+                                    </li>
+                                    <li><a href="https://docs.atlassian.com/confluence/docs-75/"
+                                           target="_blank">Confluence Server</a>
+                                    </li>
+                                    <li><a href="https://docs.gitlab.com/ee/README.html"
+                                           target="_blank">GitLab</a>
+                                    </li>
+                                    <li><a href="https://www.jenkins.io/zh/doc/book/blueocean/creating-pipelines/"
+                                           target="_blank">Jenkins</a>
+                                    </li>
+                                    <li><a href="https://docs.sonarqube.org/latest/"
+                                           target="_blank">SonarQube</a>
+                                    </li>
+                                    <li><a href="https://goharbor.io/docs/2.0.0/working-with-projects/"
+                                           target="_blank">Harbor</a>
+                                    </li>
+                                    <li><a href="https://rancher.com/docs/rancher/v2.x/en/"
+                                           target="_blank">Rancher</a>
+                                    </li>
+                                    <li><a href="https://docs.jumpserver.org/zh/master/admin-guide/quick_start/"
+                                           target="_blank">JumpServer</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row clearfix">
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_JIRA_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/jira.svg" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> Jira Software </h4>
+                        <p style="color: gray;">项目与事务跟踪工具，被广泛应用于缺陷跟踪、客户服务、需求收集、流程审批、任务跟踪、项目跟踪和敏捷管理等工作领域。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_CONF_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/confluence.svg" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> Confluence </h4>
+                        <p style="color: gray;">企业知识管理与协同软件，使用简单，但它强大的编辑和站点管理特征能够帮助团队成员之间共享信息、文档协作、集体讨论，信息推送。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_SSP_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/password.png" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> Self Service Password </h4>
+                        <p style="color: gray;">自助修改密码服务，是一款 PHP 应用程序，允许用户在 LDAP 目录中更改密码，若忘记密码，还可通过邮件进行密码重置。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row clearfix">
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_GITLAB_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/gitlab.svg" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> GitLab </h4>
+                        <p style="color: gray;">使用 Git 作为代码管理工具，并在此基础上搭建起来的 web 服务。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_HARBOR_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/harbor.png" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> Harbor </h4>
+                        <p style="color: gray">尚未集成 LDAP</p>
+                        <p style="color: gray;">一个开源镜像管理工具，提供了兼容性、性能和互操作性，帮助用户在像 Kubernetes 和 Docker
+                        这样的云本地计算平台上稳定安全地管理镜像。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_SONAR_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/sonar.svg" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> SonarQube </h4>
+                        <p style="color: gray;">用于管理代码质量的开放平台，可快速定位代码中潜在的或明显的错误。目前支持 java, C#, C/C++, Python, PL/SQL, Cobol, JavaScrip,
+                            Groovy 等二十几种编程语言的代码质量管理与检测。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row clearfix">
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_JENKINS_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/jenkins.svg" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> Jenkins </h4>
+                        <p style="color: gray;">基于 Java 开发的一种持续集成工具，用于监控持续重复的工作，使软件的持续集成变成可能。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_JMS_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/jumpserver.png" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> JumpServer </h4>
+                        <p style="color: gray;">开源的堡垒机, 使用 GNU GPL v2.0 开源协议, 是符合 4A 的专业运维审计系统。配备 Web Terminal 解决方案, 交互界面美观、用户体验好，支持管理
+                            SSH、 Telnet、 RDP、 VNC 协议资产。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 column">
+                <div class="media well" style="height: 200px;"
+                    id='ODO_RANCHER_URL' onclick='window.open("#")'
+                    onmouseover="style='height: 200px; cursor: pointer;'">
+                    <img class="pull-left" src="images/rancher.svg" class="media-object" alt='' width="120px" />
+                    <div class="media-body">
+                        <h4 class="media-heading"> Rancher </h4>
+                        <p style="color: gray;">容器管理平台，通过 Rancher 可以实现 Docker 和 Kubernetes 的轻松部署。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
