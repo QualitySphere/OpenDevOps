@@ -6,6 +6,10 @@ DOCKER_COMPOSE="docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_P
 COMPOSE_CMD="${1-''}"
 COMPOSE_SVC="${2-''}"
 PRODUCT_ID="${3}"
+ODO_INIT_PG='yes'
+ODO_INIT_LDAP='yes'
+ODO_INIT_JENKINS='yes'
+ODO_INIT_SONAR='yes'
 
 function help_doc_cmd
 {
@@ -50,6 +54,7 @@ $0 ${COMPOSE_CMD} <PRODUCT>:
     jira_plugin   - Generate JIRA plugin license
     conf          - Generate Confluence server license
     conf_plugin   - Generate Confluence plugin license
+    jenkins       - Get Jenkins initialAdminPassword
 EOF
     exit 1
 }
@@ -92,8 +97,10 @@ function check_odo_cli
 {
     echo "start stop down restart list license cleanup" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
     if [[ "${COMPOSE_CMD}" == "license" ]]; then
-        echo "jira jira_plugin conf conf_plugin" | grep -qw "${COMPOSE_SVC}" || help_doc_license
-        [[ "${COMPOSE_SVC}" != "jira" ]] && [[ -z "${PRODUCT_ID}" ]] && help_doc_license_pid
+        echo "jira jira_plugin conf conf_plugin jenkins" | grep -qw "${COMPOSE_SVC}" || help_doc_license
+        [[ "${COMPOSE_SVC}" == "jira" ]] && return 0
+        [[ "${COMPOSE_SVC}" == "jenkins" ]] && return 0
+        [[ -z "${PRODUCT_ID}" ]] && help_doc_license_pid
     elif [[ "${COMPOSE_CMD}" == "list" ]]; then
         return 0
     elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
@@ -144,8 +151,7 @@ function chmod_dir
         sleep 1
         [[ -d ${dir_name} ]] && break
     done
-    chmod -R 777 odo-jenkins
-    chmod -R 777 odo-sonar
+    chmod -R 777 ${dir_name}
 }
 
 function set_host_for_sonar
@@ -159,25 +165,45 @@ function set_host_for_sonar
     }
 }
 
+function check_odo_exist
+{
+    [[ -d odo-pg ]] && ODO_INIT_PG='no'
+    [[ -d odo-ldap/db ]] && ODO_INIT_LDAP='no'
+    [[ -d odo-jenkins ]] && ODO_INIT_JENKINS='no'
+    [[ -d odo-sonar/data ]] && ODO_INIT_SONAR='no'
+    return 0
+}
+
 ## Main
 check_env
 check_odo_cli
 check_odo_svc
+check_odo_exist
 if [[ "${COMPOSE_CMD}" == "start" ]]; then
     if [[ "${COMPOSE_SVC}" == "" ]]; then
-        set_host_for_sonar
+        [[ "${ODO_INIT_JENKINS}" == "yes" ]] && set_host_for_sonar
     else
-        echo "${COMPOSE_SVC}" | grep "sonar" && set_host_for_sonar
+        echo "${COMPOSE_SVC}" | grep "sonar" && {
+            [[ "${ODO_INIT_JENKINS}" == "yes" ]] && set_host_for_sonar
+        }
     fi
     ${DOCKER_COMPOSE} pull ${COMPOSE_SVC}
     ${DOCKER_COMPOSE} up -d ${COMPOSE_SVC}
     if [[ "${COMPOSE_SVC}" == "" ]]; then
-        chmod_dir odo-jenkins
-        create_db_for_odo
+        [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
+        [[ "${ODO_INIT_PG}" == "yes" ]] && create_db_for_odo
+        [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar
     else
         #echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
-        echo "${COMPOSE_SVC}" | grep "pg" && create_db_for_odo
-        echo "${COMPOSE_SVC}" | grep "jenkins" && chmod_dir odo-jenkins
+        echo "${COMPOSE_SVC}" | grep "pg" && {
+            [[ "${ODO_INIT_PG}" == "yes" ]] && create_db_for_odo
+        }
+        echo "${COMPOSE_SVC}" | grep "jenkins" && {
+            [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
+        }
+        echo "${COMPOSE_SVC}" | grep "sonar" && {
+            [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar
+        }
     fi
     sleep 2
     ${DOCKER_COMPOSE} ps
@@ -204,10 +230,12 @@ elif [[ "${COMPOSE_CMD}" == "license" ]]; then
         docker exec -it odo-conf getConfLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf_plugin" ]]; then
         docker exec -it odo-conf getPluginLicense ${PRODUCT_ID}
+    elif [[ "${COMPOSE_SVC}" == "jenkins" ]]; then
+        docker exec -it odo-jenkins sh -c 'cat /var/jenkins_home/secrets/initialAdminPassword'
     fi
 elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
     echo -e "\033[31;6m [ DANGER ] This action will wipe all ODO data\033[0m"
-    read -p "Do you really wanna do this? [N/y] " _CLEANUP
+    read -p "Do you really wanna do this? [y/N] " _CLEANUP
     [[ "${_CLEANUP,,}" == 'y' ]] || {
         echo "Abort cleanup"
         exit 1
