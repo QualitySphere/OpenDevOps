@@ -165,6 +165,36 @@ function set_host_for_sonar
     }
 }
 
+function init_ldap
+{
+    return 0
+}
+
+function init_sonar
+{
+    sonar_url=$(grep ODO_SONAR_URL docker-compose.yaml | awk '{print $NF}')
+    [[ "${sonar_url}" == "" ]] && sonar_url="http://localhost:9000"
+    sonar_status_url="${sonar_url}/api/system/status"
+    sonar_login_url="${sonar_url}/api/authentication/login"
+    sonar_plugin_url="${sonar_url}/api/plugins/install"
+    sonar_restart_url="${sonar_url}/api/system/restart"
+    while true
+    do
+        curl -v -s -X GET ${sonar_status_url} 2>&1 | grep HTTP | grep 200 && break
+    done
+    output=$(curl -v -s -X POST ${sonar_login_url} -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' -d 'login=admin&password=admin' 2>&1)
+    sonar_token=$(echo "${output}" | grep 'XSRF-TOKEN=' | awk -F 'XSRF-TOKEN=' '{print $2}' | awk -F ';' '{print $1}')
+    output=$(curl -v -s -X POST ${sonar_plugin_url} -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' -H "X-XSRF-TOKEN: ${sonar_token}" -d 'key=ldap' 2>&1)
+    sed -i 's/#sonar.security.realm=LDAP/sonar.security.realm=LDAP/' odo-sonar/sonar.properties
+    output=$(curl -v -s -X POST ${sonar_restart_url} -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' -H "X-XSRF-TOKEN: ${sonar_token}" 2>&1)
+    return 0
+}
+
+function init_jenkins
+{
+    return 0
+}
+
 function check_odo_exist
 {
     [[ -d odo-pg ]] && ODO_INIT_PG='no'
@@ -181,10 +211,10 @@ check_odo_svc
 check_odo_exist
 if [[ "${COMPOSE_CMD}" == "start" ]]; then
     if [[ "${COMPOSE_SVC}" == "" ]]; then
-        [[ "${ODO_INIT_JENKINS}" == "yes" ]] && set_host_for_sonar
+        [[ "${ODO_INIT_SONAR}" == "yes" ]] && set_host_for_sonar
     else
-        echo "${COMPOSE_SVC}" | grep "sonar" && {
-            [[ "${ODO_INIT_JENKINS}" == "yes" ]] && set_host_for_sonar
+        echo "${COMPOSE_SVC}" | grep -q "sonar" && {
+            [[ "${ODO_INIT_SONAR}" == "yes" ]] && set_host_for_sonar
         }
     fi
     ${DOCKER_COMPOSE} pull ${COMPOSE_SVC}
@@ -192,17 +222,17 @@ if [[ "${COMPOSE_CMD}" == "start" ]]; then
     if [[ "${COMPOSE_SVC}" == "" ]]; then
         [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
         [[ "${ODO_INIT_PG}" == "yes" ]] && create_db_for_odo
-        [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar
+        [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar && init_sonar
     else
         #echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
-        echo "${COMPOSE_SVC}" | grep "pg" && {
+        echo "${COMPOSE_SVC}" | grep -q "pg" && {
             [[ "${ODO_INIT_PG}" == "yes" ]] && create_db_for_odo
         }
-        echo "${COMPOSE_SVC}" | grep "jenkins" && {
+        echo "${COMPOSE_SVC}" | grep -q "jenkins" && {
             [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
         }
-        echo "${COMPOSE_SVC}" | grep "sonar" && {
-            [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar
+        echo "${COMPOSE_SVC}" | grep -q "sonar" && {
+            [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar && init_sonar
         }
     fi
     sleep 2
@@ -223,31 +253,31 @@ elif [[ "${COMPOSE_CMD}" == "down" ]]; then
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     if [[ "${COMPOSE_SVC}" == "jira" ]]; then
-        docker ps | grep odo-jira || {
+        docker ps | grep -q odo-jira || {
             echo -e "\033[33;6mSeems there is no Jira Software in this server \033[0m"
             exit 1
         }
         docker exec -it odo-jira getJiraLicense
     elif [[ "${COMPOSE_SVC}" == "jira_plugin" ]]; then
-        docker ps | grep odo-jira || {
+        docker ps | grep -q odo-jira || {
             echo -e "\033[33;6mSeems there is no Jira Software in this server \033[0m"
             exit 1
         }
         docker exec -it odo-jira getPluginLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf" ]]; then
-        docker ps | grep odo-conf || {
+        docker ps | grep -q odo-conf || {
             echo -e "\033[33;6mSeems there is no Confluence in this server \033[0m"
             exit 1
         }
         docker exec -it odo-conf getConfLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf_plugin" ]]; then
-        docker ps | grep odo-conf || {
+        docker ps | grep -q odo-conf || {
             echo -e "\033[33;6mSeems there is no Confluence in this server \033[0m"
             exit 1
         }
         docker exec -it odo-conf getPluginLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "jenkins" ]]; then
-        docker ps | grep odo-jenkins || {
+        docker ps | grep -q odo-jenkins || {
             echo -e "\033[33;6mSeems there is no Jenkins in this server \033[0m"
             exit 1
         }
