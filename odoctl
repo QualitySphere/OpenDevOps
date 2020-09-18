@@ -182,7 +182,13 @@ function init_sonar
     while true
     do
         sleep 2
-        curl -v -s -X GET ${sonar_status_url} 2>&1 | grep HTTP | grep 200 && break
+        curl -v -s -X GET ${sonar_status_url} 2>&1 | grep HTTP | grep 200 && {
+            sleep 2
+            curl -v -s -X POST ${sonar_login_url} \
+                -H 'Accept: application/json' \
+                -H 'Content-Type: application/x-www-form-urlencoded' \
+                -d 'login=admin&password=admin' 2>&1 | grep HTTP | grep 200 && break
+        }
     done
     echo "Login sonar: ${sonar_login_url}"
     output=$(curl -v -s -X POST ${sonar_login_url} -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' -d 'login=admin&password=admin' 2>&1)
