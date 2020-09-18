@@ -177,7 +177,7 @@ function init_sonar
     sonar_status_url="${sonar_url}/api/system/status"
     sonar_login_url="${sonar_url}/api/authentication/login"
     sonar_plugin_url="${sonar_url}/api/plugins/install"
-    s onar_restart_url="${sonar_url}/api/system/restart"
+    sonar_restart_url="${sonar_url}/api/system/restart"
     echo "Waiting for SonarQube[${sonar_url}] running ..."
     while true
     do
