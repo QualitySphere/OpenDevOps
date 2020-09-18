@@ -203,7 +203,7 @@ function init_sonar
     output=$(curl -v -s -X POST ${sonar_plugin_url} \
              -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' \
              -H "X-XSRF-TOKEN: ${sonar_token}" -d 'key=ldap' -b .sonarcookies 2>&1)
-    echo "${output}" | grep HTTP | grep 200 || {
+    echo "${output}" | grep HTTP | grep 204 || {
         echo "${output}"
         rm -rf .sonarcookies
         exit 1
@@ -220,6 +220,7 @@ function init_sonar
         exit 1
     }
     rm -rf .sonarcookies
+    docker restart odo-sonar
     return 0
 }
 
