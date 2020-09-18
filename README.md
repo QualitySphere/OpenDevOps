@@ -40,7 +40,9 @@ Optimum | 16 core | 32 G
 
 1. Clone project <br>`git clone https://github.com/QualitySphere/OpenDevOps.git`
 2. Change dir to ODO home <br>`cd OpenDevOps`
-3. Start ODO services <br>`./odoctl start all`
+3. Enable and update `odo-portal` environment part in `docker-compose.yaml` <br>Change localhost to your server IP or domain <br>![](doc/images/odo-portal-01.png)
+4. Start ODO services <br>`./odoctl start all`
+5. Access ODO-Portal `http://ODO-HOST` <br>![](doc/images/odo-portal-02.png)
 
 #### Configuration
 
@@ -55,7 +57,7 @@ Optimum | 16 core | 32 G
   - Try to update `odo`'s password via E-mail. <br>if you find there is no hostname in the reset password link, you can update `$reset_url` in `odo-ldap/ssp/config.inc.php`
 - **Jira** **Software**
   - Access Jira Software `http://ODO-HOST:8080` and select `I'll set it up myself` <br>![](doc/images/odo-jira-01.png)
-  - Input database information<br>hostname can use container name `odo-pg`, DB name is `jira` and Pg default acount/password is `postgres/opendevops` <br> click `Test Connection` to check it <br>![](doc/images/odo-jira-02.png)
+  - Input database information<br>hostname can use container name `odo-pg`, DB name is `jira` and Pg default account/password is `postgres/opendevops` <br> click `Test Connection` to check it <br>![](doc/images/odo-jira-02.png)
   - Wait while the database is set up. This may take a minute. <br>Click `Next` to set up application properties. <br>![](doc/images/odo-jira-03.png)
   - If there is a specify license key page. Go back to ODO-HOST server run `./odoctl license jira` <br>Copy generated license key and input the text area <br>![](doc/images/odo-jira-04.png)
   - Click `Next` to complete Jira Software installation
@@ -80,21 +82,36 @@ Optimum | 16 core | 32 G
   - Go back to ODO-HOST server and modify `odo-gitlab/config/gitlab.rb` to enable and config LDAP <br>![](doc/images/odo-gitlab-07.png)
   - Run `./odoctl restart gitlab` to restart GitLab
 - **SonarQube**
-  - Access and install LDAP plugin
-  - Edit properties file to enable LDAP
-  - Restart SonarQube
+  - Access SonarQube `http://ODO-HOST:9000` and click `Log in` 
+  - Login via default admin account/password `admin/admin`
+  - Click `Administration -> Marketplace` <br>search `LDAP` plugin and try to install it <br>![](doc/images/odo-sonar-01.png)
+  - Click `Restart Server` to complete plugin installation <br>![](doc/images/odo-sonar-02.png)
+  - Go back to ODO-HOST to edit `odo-sonar/sonar.properties` file to enable LDAP <br>![](doc/images/odo-sonar-03.png)
+  - Run `./odoctl restart sonar` to restart SonarQube
 - **Jenkins**
+  - Access Jenkins `http://ODO-HOST:15080` to unlock it
+  - You can get `initialAdminPassword` via otoctl tool `./odoctl license jenkins` in ODO-HOST <br>![](doc/images/odo-jenkins-01.png)
+  - ![](doc/images/odo-jenkins-02.png) 
+  - Add/Remove the plugins to config Jenkins <br>![](doc/images/odo-jenkins-03.png) 
+    - check `GitLab` `Publish Over SSH` `SSH`
+    - uncheck `Ant` `Gradle`
+  - Waiting for installation complete <br>![](doc/images/odo-jenkins-04.png) 
+  - Use default admin account to continue <br>![](doc/images/odo-jenkins-05.png) 
+  - Try to config LDAP later <br>![](doc/images/odo-jenkins-06.png) 
 - **Harbor**
+  - To Be Written
 - **Rancher**
+  - To Be Written
 - **JumpServer**
+  - To Be Written
 
 #### Manual
 
 - [Jira Software](https://docs.atlassian.com/jira/jsw-docs-0811/)
 - [Confluence](https://docs.atlassian.com/confluence/docs-75/)
 - [GitLab](https://docs.gitlab.com/ee/README.html)
-- [Jenkins](https://www.jenkins.io/zh/doc/book/blueocean/creating-pipelines/)
 - [SonarQube](https://docs.sonarqube.org/latest/)
+- [Jenkins](https://www.jenkins.io/zh/doc/book/blueocean/creating-pipelines/)
 - [Harbor](https://goharbor.io/docs/2.0.0/working-with-projects/)
 - [Rancher](https://rancher.com/docs/rancher/v2.x/en/)
 - [JumpServer](https://docs.jumpserver.org/zh/master/admin-guide/quick_start/)
