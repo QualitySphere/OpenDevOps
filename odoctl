@@ -177,23 +177,26 @@ function init_sonar
     sonar_status_url="${sonar_url}/api/system/status"
     sonar_login_url="${sonar_url}/api/authentication/login"
     sonar_plugin_url="${sonar_url}/api/plugins/install"
-    sonar_restart_url="${sonar_url}/api/system/restart"
+    s onar_restart_url="${sonar_url}/api/system/restart"
     echo "Waiting for SonarQube[${sonar_url}] running ..."
     while true
     do
         sleep 2
-        curl -v -s -X GET ${sonar_status_url} 2>&1 | grep HTTP | grep 200 && {
-            sleep 2
-            output=$(curl -v -s -X POST ${sonar_login_url} \
-                -H 'Accept: application/json' \
-                -H 'Content-Type: application/x-www-form-urlencoded' \
-                -d 'login=admin&password=admin' -c .sonarcookies 2>&1)
-            echo "${output}" | grep HTTP | grep 200 && {
-                sonar_token=$(echo "${output}" | grep 'XSRF-TOKEN=' | awk -F 'XSRF-TOKEN=' '{print $2}' | awk -F ';' '{print $1}')
-                [[ -z "${sonar_token}" ]] && exit 1
-                echo "${sonar_token}"
-                break
-            }
+        curl -v -s -X GET ${sonar_status_url} 2>&1 | grep HTTP | grep 200 && break
+    done
+    echo "Login SonarQube[${sonar_login_url}] ..."
+    while true
+    do
+        sleep 2
+        output=$(curl -v -s -X POST ${sonar_login_url} \
+                 -H 'Accept: application/json' \
+                 -H 'Content-Type: application/x-www-form-urlencoded' \
+                 -d 'login=admin&password=admin' -c .sonarcookies 2>&1)
+        echo "${output}" | grep HTTP | grep 200 && {
+             sonar_token=$(echo "${output}" | grep ' Set-Cookie:' | grep 'XSRF-TOKEN=' | awk -F 'XSRF-TOKEN=' '{print $2}' | awk -F ';' '{print $1}')
+             [[ -z "${sonar_token}" ]] && exit 1
+             echo "${sonar_token}"
+             break
         }
     done
     echo "Install LDAP plugin: ${sonar_plugin_url}"
