@@ -181,18 +181,19 @@ function init_sonar
     echo "Waiting for SonarQube[${sonar_url}] running ..."
     while true
     do
+        sleep 2
         curl -v -s -X GET ${sonar_status_url} 2>&1 | grep HTTP | grep 200 && break
     done
-    echo "Login sonar"
+    echo "Login sonar: ${sonar_login_url}"
     output=$(curl -v -s -X POST ${sonar_login_url} -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' -d 'login=admin&password=admin' 2>&1)
     sonar_token=$(echo "${output}" | grep 'XSRF-TOKEN=' | awk -F 'XSRF-TOKEN=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "${sonar_token}" ]] && exit 0
     echo "${sonar_token}"
-    echo "Install LDAP plugin"
+    echo "Install LDAP plugin: ${sonar_plugin_url}"
     curl -v -s -X POST ${sonar_plugin_url} -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' -H "X-XSRF-TOKEN: ${sonar_token}" -d 'key=ldap'
     echo "Update sonar.properties to enable LDAP"
     sed -i 's/#sonar.security.realm=LDAP/sonar.security.realm=LDAP/' odo-sonar/sonar.properties
-    echo "Restart sonar"
+    echo "Restart sonar: ${sonar_restart_url}"
     curl -v -s -X POST ${sonar_restart_url} -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' -H "X-XSRF-TOKEN: ${sonar_token}"
     return 0
 }
