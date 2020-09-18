@@ -1,6 +1,27 @@
 # OpenDevOps
 ###### This is ONLY for DevOps learning and practice. Please contact the software vendor to get the product license if you are a company.
 
+> **Table of Contents**
+> - Framework
+> - Quick Start
+>   - Resource
+>   - Deployment
+>   - Configuration
+>     - OpenLDAP
+>     - Self Service Password
+>     - Jira Software
+>     - Confluence
+>     - GitLab
+>     - SonarQube
+>     - Jenkins
+>     - Harbor
+>     - Rancher
+>     - JumpServer
+>   - Manual
+> - Tool Chain
+> - odoctl
+> - ODO Dockerfiles
+
 ## Framework
 
 ![](doc/images/odo-framework.png)
@@ -50,14 +71,19 @@ Optimum | 16 core | 32 G
   - Select `Manage users and groups within Confluence` and create administrator for Confluence <br>![](doc/images/odo-conf-05.png)
   - Click `Next` to complete Confluence configuration
 - **GitLab**
-  - Install 
-  - Update config
-  - Restart GitLab
-- **Jenkins**
+  - Waiting for odo-gitlab container's state change to `healty` <br>![](doc/images/odo-gitlab-01.png)
+  - Access GitLab `http://ODO-HOST:12080` to set password for the default admin account `root` <br>![](doc/images/odo-gitlab-02.png)
+  - Sign in GitLab with `root` <br>![](doc/images/odo-gitlab-03.png)
+  - Click `Admin Area` button <br>![](doc/images/odo-gitlab-04.png)
+  - Select `Settings -> General` menu <br>![](doc/images/odo-gitlab-05.png)
+  - Find `Sign-up restrictions` and uncheck `Sign-up enabled`, click `save` to disable sign-up feature <br>![](doc/images/odo-gitlab-06.png)
+  - Go back to ODO-HOST server and modify `odo-gitlab/config/gitlab.rb` to enable and config LDAP <br>![](doc/images/odo-gitlab-07.png)
+  - Run `./odoctl restart gitlab` to restart GitLab
 - **SonarQube**
   - Access and install LDAP plugin
   - Edit properties file to enable LDAP
   - Restart SonarQube
+- **Jenkins**
 - **Harbor**
 - **Rancher**
 - **JumpServer**
@@ -118,6 +144,7 @@ Portal|80<br>443|80<br>443||
     gitlab    - GitLab Community Edition
     rancher   - Rancher
     jms       - JumpServer
+    portal    - DevOps Portal
 ```
 
 - list containers
@@ -132,6 +159,7 @@ Portal|80<br>443|80<br>443||
     jira_plugin   - Generate JIRA plugin license
     conf          - Generate Confluence server license
     conf_plugin   - Generate Confluence plugin license
+    jenkins       - Get Jenkins initialAdminPassword
 
 ./odoctl license jira_plugin/conf/conf_plugin <PRODUCT_ID>:
     PRODUCT_ID is REQUIRED
@@ -157,4 +185,5 @@ Portal|80<br>443|80<br>443||
 - [Self Service Password](https://github.com/seoktaehyeon/docker-self-service-password/blob/1.3/Dockerfile)
 - [Jira Software](https://github.com/seoktaehyeon/docker-jira-software/blob/8.11/Dockerfile)
 - [Confluence Server](https://github.com/seoktaehyeon/docker-confluence-server/blob/7.5/Dockerfile)
+- [ODO Portal](odo-portal/dockerBuild/Dockerfile)
 

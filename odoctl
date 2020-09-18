@@ -223,19 +223,40 @@ elif [[ "${COMPOSE_CMD}" == "down" ]]; then
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     if [[ "${COMPOSE_SVC}" == "jira" ]]; then
+        docker ps | grep odo-jira || {
+            echo -e "\033[33;6mSeems there is no Jira Software in this server \033[0m"
+            exit 1
+        }
         docker exec -it odo-jira getJiraLicense
     elif [[ "${COMPOSE_SVC}" == "jira_plugin" ]]; then
+        docker ps | grep odo-jira || {
+            echo -e "\033[33;6mSeems there is no Jira Software in this server \033[0m"
+            exit 1
+        }
         docker exec -it odo-jira getPluginLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf" ]]; then
+        docker ps | grep odo-conf || {
+            echo -e "\033[33;6mSeems there is no Confluence in this server \033[0m"
+            exit 1
+        }
         docker exec -it odo-conf getConfLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf_plugin" ]]; then
+        docker ps | grep odo-conf || {
+            echo -e "\033[33;6mSeems there is no Confluence in this server \033[0m"
+            exit 1
+        }
         docker exec -it odo-conf getPluginLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "jenkins" ]]; then
+        docker ps | grep odo-jenkins || {
+            echo -e "\033[33;6mSeems there is no Jenkins in this server \033[0m"
+            exit 1
+        }
         docker exec -it odo-jenkins sh -c 'cat /var/jenkins_home/secrets/initialAdminPassword'
     fi
 elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
     echo -e "\033[31;6m [ DANGER ] This action will wipe all ODO data\033[0m"
-    read -p "Do you really wanna do this? [y/N] " _CLEANUP
+    echo -en "\033[33;6mDo you really wanna to this? \033[0m"
+    read -p "[y/N] " _CLEANUP
     [[ "${_CLEANUP,,}" == 'y' ]] || {
         echo "Abort cleanup"
         exit 1
