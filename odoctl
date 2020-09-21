@@ -11,6 +11,15 @@ ODO_INIT_LDAP='yes'
 ODO_INIT_JENKINS='yes'
 ODO_INIT_SONAR='yes'
 
+## Common Function
+function log_error
+{
+    echo -e "\033[33;6m$@ \033[0m"
+    exit 1
+}
+
+
+## ODO Document
 function help_doc_cmd
 {
     cat <<EOF
@@ -77,6 +86,7 @@ EOF
     exit 0
 }
 
+## ODO Function
 function check_env
 {
     [[ -f /etc/selinux/config ]] && {
@@ -167,6 +177,52 @@ function set_host_for_sonar
 
 function init_ldap
 {
+    phpldapadmin_url=$(grep ODO_PHPLADPADMIN_URL docker-compose.yaml | awk '{print $NF}')
+    [[ "${phpldapadmin_url}" == "" ]] && phpldapadmin_url="http://localhost:18880"
+    _curl_output=".ldapcontent"
+    _ldap_account="cn=admin,dc=qualitysphere,dc=github,dc=io"
+    _ldap_password="opendevops"
+    echo "Access LDAP"
+    while true
+    do
+        sleep 2
+        output=$(curl -s -v -L -X GET "$phpldapadmin_url/htdocs/index.php" -o ${_curl_output} 2>&1)
+        echo "$output" | grep HTTP | grep 200 && {
+            header_cookie=$(echo "$output" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F ';' '{print $1}')
+            echo "$header_cookie"
+            break
+        }
+    done
+    echo "Login LDAP"
+    output=$(curl -s -v -L -X POST "$phpldapadmin_url/htdocs/cmd.php" \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H "Cookie: $header_cookie" \
+        --data-urlencode 'cmd=login' \
+        --data-urlencode 'server_id=1' \
+        --data-urlencode 'nodecode[login_pass]=1' \
+        --data-urlencode "login=${_ldap_account}" \
+        --data-urlencode "login_pass=${_ldap_password}" \
+        --data-urlencode 'submit=Authenticate' \
+        -o ${_curl_output} 2>&1)
+    echo "$output" | grep HTTP | grep 200 || {
+        echo "$output"
+        exit 1
+    }
+    echo "Import LDAP"
+    output=$(curl -s -v -L -X POST "$phpldapadmin_url/htdocs/cmd.php" \
+        -H 'Accept: */*' \
+        -H 'Content-Type: multipart/form-data' \
+        -H "Cookie: $header_cookie" \
+        --form 'server_id=1' \
+        --form 'cmd=import' \
+        --form "ldif=$(cat odo-ldap/odo_users.ldif)" \
+        -o ${_curl_output} 2>&1)
+    echo "$output" | grep HTTP | grep 200 || {
+        echo "$output"
+        exit 1
+    }
+    rm -rf ${_curl_output}
     return 0
 }
 
@@ -254,11 +310,15 @@ if [[ "${COMPOSE_CMD}" == "start" ]]; then
     ${DOCKER_COMPOSE} pull ${COMPOSE_SVC}
     ${DOCKER_COMPOSE} up -d ${COMPOSE_SVC}
     if [[ "${COMPOSE_SVC}" == "" ]]; then
-        [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
+        [[ "${ODO_INIT_LDAP}" == "yes" ]] && init_ldap
         [[ "${ODO_INIT_PG}" == "yes" ]] && create_db_for_odo
+        [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
         [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar && init_sonar
     else
         #echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
+        echo "${COMPOSE_SVC}" | grep -q "ldap" && {
+            [[ "${ODO_INIT_LDAP}" == "yes" ]] && init_ldap
+        }
         echo "${COMPOSE_SVC}" | grep -q "pg" && {
             [[ "${ODO_INIT_PG}" == "yes" ]] && create_db_for_odo
         }
@@ -287,44 +347,26 @@ elif [[ "${COMPOSE_CMD}" == "down" ]]; then
     ${DOCKER_COMPOSE} ps
 elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     if [[ "${COMPOSE_SVC}" == "jira" ]]; then
-        docker ps | grep -q odo-jira || {
-            echo -e "\033[33;6mSeems there is no Jira Software in this server \033[0m"
-            exit 1
-        }
+        docker ps | grep -q odo-jira || log_error "Seems there is no Jira Software in this server"
         docker exec -it odo-jira getJiraLicense
     elif [[ "${COMPOSE_SVC}" == "jira_plugin" ]]; then
-        docker ps | grep -q odo-jira || {
-            echo -e "\033[33;6mSeems there is no Jira Software in this server \033[0m"
-            exit 1
-        }
+        docker ps | grep -q odo-jira || log_error "Seems there is no Jira Software in this server"
         docker exec -it odo-jira getPluginLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf" ]]; then
-        docker ps | grep -q odo-conf || {
-            echo -e "\033[33;6mSeems there is no Confluence in this server \033[0m"
-            exit 1
-        }
+        docker ps | grep -q odo-conf || log_error "Seems there is no Confluence in this server"
         docker exec -it odo-conf getConfLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "conf_plugin" ]]; then
-        docker ps | grep -q odo-conf || {
-            echo -e "\033[33;6mSeems there is no Confluence in this server \033[0m"
-            exit 1
-        }
+        docker ps | grep -q odo-conf || log_error "Seems there is no Confluence in this server"
         docker exec -it odo-conf getPluginLicense ${PRODUCT_ID}
     elif [[ "${COMPOSE_SVC}" == "jenkins" ]]; then
-        docker ps | grep -q odo-jenkins || {
-            echo -e "\033[33;6mSeems there is no Jenkins in this server \033[0m"
-            exit 1
-        }
+        docker ps | grep -q odo-jenkins || log_error "Seems there is no Jenkins in this server"
         docker exec -it odo-jenkins sh -c 'cat /var/jenkins_home/secrets/initialAdminPassword'
     fi
 elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
     echo -e "\033[31;6m [ DANGER ] This action will wipe all ODO data\033[0m"
     echo -en "\033[33;6mDo you really wanna to this? \033[0m"
     read -p "[y/N] " _CLEANUP
-    [[ "${_CLEANUP,,}" == 'y' ]] || {
-        echo "Abort cleanup"
-        exit 1
-    }
+    [[ "${_CLEANUP,,}" == 'y' ]] || log_error "Abort cleanup"
     ${DOCKER_COMPOSE} down
     sleep 2
     ${DOCKER_COMPOSE} ps

@@ -211,6 +211,7 @@ services:
       - 80:80
       - 443:443
 #    environment:
+#      ODO_PHPLDAPADMIN_URL: http://localhost:18880
 #      ODO_JIRA_URL: http://localhost:8080
 #      ODO_CONF_URL: http://localhost:8090
 #      ODO_SSP_URL: http://localhost:18080
