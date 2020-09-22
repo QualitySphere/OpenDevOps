@@ -3,13 +3,21 @@
 COMPOSE_YAML='docker-compose.yaml'
 COMPOSE_PROJECT='odo'
 DOCKER_COMPOSE="docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT}"
+
 COMPOSE_CMD="${1-''}"
 COMPOSE_SVC="${2-''}"
 PRODUCT_ID="${3}"
+
 ODO_INIT_PG='yes'
 ODO_INIT_LDAP='yes'
 ODO_INIT_JENKINS='yes'
 ODO_INIT_SONAR='yes'
+ODO_INIT_JIRA='yes'
+ODO_INIT_CONF='yes'
+ODO_INIT_GITLAB='yes'
+ODO_INIT_HARBOR='yes'
+ODO_INIT_RANCHER='yes'
+ODO_INIT_JMS='yes'
 
 ## Common Function
 function log_error
@@ -18,6 +26,16 @@ function log_error
     exit 1
 }
 
+function chmod_dir
+{
+    dir_name=$1
+    while true
+    do
+        sleep 1
+        [[ -d ${dir_name} ]] && break
+    done
+    chmod -R 777 ${dir_name}
+}
 
 ## ODO Document
 function help_doc_cmd
@@ -86,7 +104,7 @@ EOF
     exit 0
 }
 
-## ODO Function
+## ODO Basic Function
 function check_env
 {
     [[ -f /etc/selinux/config ]] && {
@@ -134,17 +152,42 @@ function check_odo_svc
     fi
 }
 
-function create_db_for_odo
+function check_odo_exist
 {
+    [[ -d odo-pg ]] && ODO_INIT_PG='no'
+    [[ -d odo-ldap/db ]] && ODO_INIT_LDAP='no'
+    [[ -d odo-jenkins ]] && ODO_INIT_JENKINS='no'
+    [[ -d odo-sonar/data ]] && ODO_INIT_SONAR='no'
+    [[ -d odo-jira ]] && ODO_INIT_JIRA='no'
+    [[ -d odo-conf ]] && ODO_INIT_CONF='no'
+    [[ -d odo-gitlab/config ]] && ODO_INIT_GITLAB='no'
+    [[ -d odo-harbor ]] && ODO_INIT_HARBOR='no'
+    [[ -d odo-rancher ]] && ODO_INIT_RANCHER='no'
+    [[ -d odo-jms/data ]] && ODO_INIT_JMS='no'
+    return 0
+}
+
+## ODO Init Service Function
+function set_host_for_sonar
+{
+    [[ "${ODO_INIT_SONAR}" == "yes" ]] || return 0
+    [[ "$(uname)" == "Linux" ]] && {
+        sysctl -w vm.max_map_count=262143
+        sysctl -w fs.file-max=65535
+        ulimit -n 65535
+        ulimit -u 4095
+    }
+}
+
+function init_odo_pg
+{
+    [[ "${ODO_INIT_PG}" == "yes" ]] || return 0
+    chmod_dir odo-pg
     while true
     do
         sleep 1
-        #docker exec -it odo-mysql bash -c "mysql -uroot -popendevops -e 'show full processlist;'" && break
         docker exec -it odo-pg psql -U postgres -l && break
     done
-    #docker exec -it odo-mysql bash -c "mysql -uroot -popendevops -e 'CREATE DATABASE IF NOT EXISTS jira DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
-    #docker exec -it odo-mysql bash -c "mysql -uroot -popendevops -e 'CREATE DATABASE IF NOT EXISTS conf DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;'"
-    #docker exec -it odo-mysql bash -c "mysql -uroot -popendevops -e 'CREATE DATABASE IF NOT EXISTS sonar DEFAULT CHARSET utf8 COLLATE utf8_bin;'"
     db_list=$(docker exec -it odo-pg psql -U postgres -l)
     for db_name in jira conf sonar
     do
@@ -153,30 +196,9 @@ function create_db_for_odo
     docker exec -it odo-pg psql -U postgres -l
 }
 
-function chmod_dir
+function init_odo_ldap
 {
-    dir_name=$1
-    while true
-    do
-        sleep 1
-        [[ -d ${dir_name} ]] && break
-    done
-    chmod -R 777 ${dir_name}
-}
-
-function set_host_for_sonar
-{
-    chmod -R 777 odo-sonar
-    [[ "$(uname)" == "Linux" ]] && {
-        sysctl -w vm.max_map_count=262144
-        sysctl -w fs.file-max=65536
-        ulimit -n 65536
-        ulimit -u 4096
-    }
-}
-
-function init_ldap
-{
+    [[ "${ODO_INIT_LDAP}" == "yes" ]] || return 0
     phpldapadmin_url=$(grep ODO_PHPLADPADMIN_URL docker-compose.yaml | awk '{print $NF}')
     [[ "${phpldapadmin_url}" == "" ]] && phpldapadmin_url="http://localhost:18880"
     _curl_output=".ldapcontent"
@@ -226,8 +248,10 @@ function init_ldap
     return 0
 }
 
-function init_sonar
+function init_odo_sonar
 {
+    [[ "${ODO_INIT_SONAR}" == "yes" ]] || return 0
+    chmod_dir odo-sonar
     sonar_url=$(grep ODO_SONAR_URL docker-compose.yaml | awk '{print $NF}')
     [[ "${sonar_url}" == "" ]] && sonar_url="http://localhost:9000"
     sonar_status_url="${sonar_url}/api/system/status"
@@ -280,17 +304,42 @@ function init_sonar
     return 0
 }
 
-function init_jenkins
+function init_odo_jenkins
 {
+    [[ "${ODO_INIT_JENKINS}" == "yes" ]] || return 0
+    chmod_dir odo-jenkins
     return 0
 }
 
-function check_odo_exist
+function init_odo_jira
 {
-    [[ -d odo-pg ]] && ODO_INIT_PG='no'
-    [[ -d odo-ldap/db ]] && ODO_INIT_LDAP='no'
-    [[ -d odo-jenkins ]] && ODO_INIT_JENKINS='no'
-    [[ -d odo-sonar/data ]] && ODO_INIT_SONAR='no'
+    [[ "${ODO_INIT_JIRA}" == "yes" ]] || return 0
+    return 0
+}
+
+function init_odo_conf
+{
+    [[ "${ODO_INIT_CONF}" == "yes" ]] || return 0
+    return 0
+}
+function init_odo_gitlab
+{
+    [[ "${ODO_INIT_GITLAB}" == "yes" ]] || return 0
+    return 0
+}
+function init_odo_harbor
+{
+    [[ "${ODO_INIT_HARBOR}" == "yes" ]] || return 0
+    return 0
+}
+function init_odo_rancher
+{
+    [[ "${ODO_INIT_RANCHER}" == "yes" ]] || return 0
+    return 0
+}
+function init_odo_jms
+{
+    [[ "${ODO_INIT_JMS}" == "yes" ]] || return 0
     return 0
 }
 
@@ -300,51 +349,70 @@ check_odo_cli
 check_odo_svc
 check_odo_exist
 if [[ "${COMPOSE_CMD}" == "start" ]]; then
+    # Set host before UP containers
     if [[ "${COMPOSE_SVC}" == "" ]]; then
-        [[ "${ODO_INIT_SONAR}" == "yes" ]] && set_host_for_sonar
+        set_host_for_sonar
     else
-        echo "${COMPOSE_SVC}" | grep -q "sonar" && {
-            [[ "${ODO_INIT_SONAR}" == "yes" ]] && set_host_for_sonar
-        }
+        echo "${COMPOSE_SVC}" | grep -q "sonar" && set_host_for_sonar
+    fi
+    # Pull images
+    ${DOCKER_COMPOSE} pull ${COMPOSE_SVC}
+    # UP service container
+    ${DOCKER_COMPOSE} up -d ${COMPOSE_SVC}
+    # if start all odo-svc, need init them
+    if [[ "${COMPOSE_SVC}" == "" ]]; then
+        init_odo_ldap
+        init_odo_pg
+        init_odo_jenkins
+        init_odo_sonar
+    # if start the odo-svc, check and init it
+    else
+        echo "${COMPOSE_SVC}" | grep -q "ldap" && init_odo_ldap
+        echo "${COMPOSE_SVC}" | grep -q "pg" && init_odo_pg
+        echo "${COMPOSE_SVC}" | grep -q "jenkins" && init_odo_jenkins
+        echo "${COMPOSE_SVC}" | grep -q "sonar" && init_odo_sonar
+    fi
+    sleep 2
+    ${DOCKER_COMPOSE} ps
+# Emm......
+elif [[ "${COMPOSE_CMD}" == "no_init_start" ]]; then
+    if [[ "${COMPOSE_SVC}" == "" ]]; then
+        set_host_for_sonar
+    else
+        echo "${COMPOSE_SVC}" | grep -q "sonar" && set_host_for_sonar
     fi
     ${DOCKER_COMPOSE} pull ${COMPOSE_SVC}
     ${DOCKER_COMPOSE} up -d ${COMPOSE_SVC}
     if [[ "${COMPOSE_SVC}" == "" ]]; then
-        [[ "${ODO_INIT_LDAP}" == "yes" ]] && init_ldap
-        [[ "${ODO_INIT_PG}" == "yes" ]] && create_db_for_odo
+        [[ "${ODO_INIT_PG}" == "yes" ]] && chmod_dir odo-pg
         [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
-        [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar && init_sonar
+        [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar
     else
-        #echo "${COMPOSE_SVC}" | grep "mysql" && create_db_for_odo
-        echo "${COMPOSE_SVC}" | grep -q "ldap" && {
-            [[ "${ODO_INIT_LDAP}" == "yes" ]] && init_ldap
-        }
-        echo "${COMPOSE_SVC}" | grep -q "pg" && {
-            [[ "${ODO_INIT_PG}" == "yes" ]] && create_db_for_odo
-        }
-        echo "${COMPOSE_SVC}" | grep -q "jenkins" && {
-            [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
-        }
-        echo "${COMPOSE_SVC}" | grep -q "sonar" && {
-            [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar && init_sonar
-        }
+        echo "${COMPOSE_SVC}" | grep -q "pg" && [[ "${ODO_INIT_PG}" == "yes" ]] && chmod_dir odo-pg
+        echo "${COMPOSE_SVC}" | grep -q "jenkins" && [[ "${ODO_INIT_JENKINS}" == "yes" ]] && chmod_dir odo-jenkins
+        echo "${COMPOSE_SVC}" | grep -q "sonar" && [[ "${ODO_INIT_SONAR}" == "yes" ]] && chmod_dir odo-sonar
     fi
     sleep 2
     ${DOCKER_COMPOSE} ps
+# Stop the container
 elif [[ "${COMPOSE_CMD}" == "stop" ]]; then
     ${DOCKER_COMPOSE} stop ${COMPOSE_SVC}
     sleep 2
     ${DOCKER_COMPOSE} ps
+# Restart the container
 elif [[ "${COMPOSE_CMD}" == "restart" ]]; then
     ${DOCKER_COMPOSE} restart ${COMPOSE_SVC}
     sleep 2
     ${DOCKER_COMPOSE} ps
+# List all containers
 elif [[ "${COMPOSE_CMD}" == "list" ]]; then
     ${DOCKER_COMPOSE} ps
+# Down all containers
 elif [[ "${COMPOSE_CMD}" == "down" ]]; then
     ${DOCKER_COMPOSE} down
     sleep 2
     ${DOCKER_COMPOSE} ps
+# Generate license or get initial password
 elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     if [[ "${COMPOSE_SVC}" == "jira" ]]; then
         docker ps | grep -q odo-jira || log_error "Seems there is no Jira Software in this server"
@@ -362,8 +430,10 @@ elif [[ "${COMPOSE_CMD}" == "license" ]]; then
         docker ps | grep -q odo-jenkins || log_error "Seems there is no Jenkins in this server"
         docker exec -it odo-jenkins sh -c 'cat /var/jenkins_home/secrets/initialAdminPassword'
     fi
+# Cleanup all
 elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
-    echo -e "\033[31;6m [ DANGER ] This action will wipe all ODO data\033[0m"
+    echo -en "\033[31;6m [ DANGER ] \033[0m"
+    echo -e "\033[33;6mThis action will wipe all ODO data\033[0m"
     echo -en "\033[33;6mDo you really wanna to this? \033[0m"
     read -p "[y/N] " _CLEANUP
     [[ "${_CLEANUP,,}" == 'y' ]] || log_error "Abort cleanup"
