@@ -20,26 +20,28 @@ ODO_INIT_RANCHER='yes'
 ODO_INIT_JMS='yes'
 
 ## Common Function
-function log_error
-{
+function log_error() {
     echo -e "\033[33;6m$@ \033[0m"
     exit 1
 }
 
-function chmod_dir
-{
+function log_fail() {
+    echo -e "\033[31;6m[FAIL] Oops! Looks like we have some trouble ...\033[0m"
+    echo -e "$@"
+    exit 1
+}
+
+function chmod_dir() {
     dir_name=$1
-    while true
-    do
+    while true; do
         sleep 1
         [[ -d ${dir_name} ]] && break
     done
-    chmod -R 777 ${dir_name}
+    chmod -R 776 ${dir_name}
 }
 
 ## ODO Document
-function help_doc_cmd
-{
+function help_doc_cmd() {
     cat <<EOF
 $0 <COMMAND>:
     start     - Up container(s) to start service(s)
@@ -53,8 +55,7 @@ EOF
     exit 1
 }
 
-function help_doc_svc
-{
+function help_doc_svc() {
     cat <<EOF
 $0 ${COMPOSE_CMD} <SERVICE>:
     all       - All Services
@@ -73,8 +74,7 @@ EOF
     exit 1
 }
 
-function help_doc_license
-{
+function help_doc_license() {
     cat <<EOF
 $0 ${COMPOSE_CMD} <PRODUCT>:
     jira          - Generate JIRA software license
@@ -86,8 +86,7 @@ EOF
     exit 1
 }
 
-function help_doc_license_pid
-{
+function help_doc_license_pid() {
     cat <<EOF
 $0 ${COMPOSE_CMD} ${COMPOSE_SVC} <PRODUCT_ID>:
     PRODUCT_ID is REQUIRED
@@ -105,14 +104,13 @@ EOF
 }
 
 ## ODO Basic Function
-function check_env
-{
+function check_env() {
+    [[ "$(uname)" == "Linux" ]] || log_error "Only support Linux OS"
     [[ -f /etc/selinux/config ]] && {
         [[ "$(getenforce)" == "Enforcing" ]] && setenforce 0
         sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
     }
-    for _tool in "docker" "docker-compose"
-    do
+    for _tool in "docker" "docker-compose"; do
         output=$(${_tool} --version 2>&1) || {
             echo -e "\033[33;6m${_tool} is required in this machine \033[0m"
             echo "${output}"
@@ -121,9 +119,8 @@ function check_env
     done
 }
 
-function check_odo_cli
-{
-    echo "start stop down restart list license cleanup" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
+function check_odo_cli() {
+    echo "start stop down restart list license cleanup no_init_start" | grep -qw "${COMPOSE_CMD}" || help_doc_cmd
     if [[ "${COMPOSE_CMD}" == "license" ]]; then
         echo "jira jira_plugin conf conf_plugin jenkins" | grep -qw "${COMPOSE_SVC}" || help_doc_license
         [[ "${COMPOSE_SVC}" == "jira" ]] && return 0
@@ -141,8 +138,7 @@ function check_odo_cli
     return 0
 }
 
-function check_odo_svc
-{
+function check_odo_svc() {
     if [[ "${COMPOSE_SVC}" == "all" ]]; then
         COMPOSE_SVC=""
     elif [[ "${COMPOSE_SVC}" == "ldap" ]]; then
@@ -152,8 +148,7 @@ function check_odo_svc
     fi
 }
 
-function check_odo_exist
-{
+function check_odo_exist() {
     [[ -d odo-pg ]] && ODO_INIT_PG='no'
     [[ -d odo-ldap/db ]] && ODO_INIT_LDAP='no'
     [[ -d odo-jenkins ]] && ODO_INIT_JENKINS='no'
@@ -168,36 +163,31 @@ function check_odo_exist
 }
 
 ## ODO Init Service Function
-function set_host_for_sonar
-{
+function set_host_for_sonar() {
     [[ "${ODO_INIT_SONAR}" == "yes" ]] || return 0
     [[ "$(uname)" == "Linux" ]] && {
-        sysctl -w vm.max_map_count=262143
+        sysctl -w vm.max_map_count=262144
         sysctl -w fs.file-max=65535
         ulimit -n 65535
         ulimit -u 4095
     }
 }
 
-function init_odo_pg
-{
+function init_odo_pg() {
     [[ "${ODO_INIT_PG}" == "yes" ]] || return 0
     chmod_dir odo-pg
-    while true
-    do
+    while true; do
         sleep 1
         docker exec -it odo-pg psql -U postgres -l && break
     done
     db_list=$(docker exec -it odo-pg psql -U postgres -l)
-    for db_name in jira conf sonar
-    do
+    for db_name in jira conf sonar; do
         echo "${db_list}" | grep $db_name || docker exec -it odo-pg createdb -U postgres $db_name
     done
     docker exec -it odo-pg psql -U postgres -l
 }
 
-function init_odo_ldap
-{
+function init_odo_ldap() {
     [[ "${ODO_INIT_LDAP}" == "yes" ]] || return 0
     phpldapadmin_url=$(grep ODO_PHPLADPADMIN_URL docker-compose.yaml | awk '{print $NF}')
     [[ "${phpldapadmin_url}" == "" ]] && phpldapadmin_url="http://localhost:18880"
@@ -205,8 +195,7 @@ function init_odo_ldap
     _ldap_account="cn=admin,dc=qualitysphere,dc=github,dc=io"
     _ldap_password="opendevops"
     echo "Access LDAP"
-    while true
-    do
+    while true; do
         sleep 2
         output=$(curl -s -v -L -X GET "$phpldapadmin_url/htdocs/index.php" -o ${_curl_output} 2>&1)
         echo "$output" | grep HTTP | grep 200 && {
@@ -227,10 +216,7 @@ function init_odo_ldap
         --data-urlencode "login_pass=${_ldap_password}" \
         --data-urlencode 'submit=Authenticate' \
         -o ${_curl_output} 2>&1)
-    echo "$output" | grep HTTP | grep 200 || {
-        echo "$output"
-        exit 1
-    }
+    echo "$output" | grep HTTP | grep 200 || log_fail "$output"
     echo "Import LDAP"
     output=$(curl -s -v -L -X POST "$phpldapadmin_url/htdocs/cmd.php" \
         -H 'Accept: */*' \
@@ -240,16 +226,12 @@ function init_odo_ldap
         --form 'cmd=import' \
         --form "ldif=$(cat odo-ldap/odo_users.ldif)" \
         -o ${_curl_output} 2>&1)
-    echo "$output" | grep HTTP | grep 200 || {
-        echo "$output"
-        exit 1
-    }
+    echo "$output" | grep HTTP | grep 200 || log_fail "$output"
     rm -rf ${_curl_output}
     return 0
 }
 
-function init_odo_sonar
-{
+function init_odo_sonar() {
     [[ "${ODO_INIT_SONAR}" == "yes" ]] || return 0
     chmod_dir odo-sonar
     sonar_url=$(grep ODO_SONAR_URL docker-compose.yaml | awk '{print $NF}')
@@ -259,86 +241,146 @@ function init_odo_sonar
     sonar_plugin_url="${sonar_url}/api/plugins/install"
     sonar_restart_url="${sonar_url}/api/system/restart"
     echo "Waiting for SonarQube[${sonar_url}] running ..."
-    while true
-    do
+    while true; do
         sleep 2
         curl -v -s -X GET ${sonar_status_url} 2>&1 | grep HTTP | grep 200 && break
     done
     echo "Login SonarQube[${sonar_login_url}] ..."
-    while true
-    do
+    while true; do
         sleep 2
         output=$(curl -v -s -X POST ${sonar_login_url} \
-                 -H 'Accept: application/json' \
-                 -H 'Content-Type: application/x-www-form-urlencoded' \
-                 -d 'login=admin&password=admin' -c .sonarcookies 2>&1)
+            -H 'Accept: application/json' \
+            -H 'Content-Type: application/x-www-form-urlencoded' \
+            -d 'login=admin&password=admin' -c .sonarcookies 2>&1)
         echo "${output}" | grep HTTP | grep 200 && {
-             sonar_token=$(echo "${output}" | grep ' Set-Cookie:' | grep 'XSRF-TOKEN=' | awk -F 'XSRF-TOKEN=' '{print $2}' | awk -F ';' '{print $1}')
-             [[ -z "${sonar_token}" ]] && exit 1
-             echo "${sonar_token}"
-             break
+            sonar_token=$(echo "${output}" | grep ' Set-Cookie:' | grep 'XSRF-TOKEN=' | awk -F 'XSRF-TOKEN=' '{print $2}' | awk -F ';' '{print $1}')
+            [[ -z "${sonar_token}" ]] && exit 1
+            echo "${sonar_token}"
+            break
         }
     done
     echo "Install LDAP plugin: ${sonar_plugin_url}"
     output=$(curl -v -s -X POST ${sonar_plugin_url} \
-             -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' \
-             -H "X-XSRF-TOKEN: ${sonar_token}" -d 'key=ldap' -b .sonarcookies 2>&1)
+        -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H "X-XSRF-TOKEN: ${sonar_token}" -d 'key=ldap' -b .sonarcookies 2>&1)
     echo "${output}" | grep HTTP | grep 204 || {
-        echo "${output}"
         rm -rf .sonarcookies
-        exit 1
+        log_fail "$output"
     }
     echo "Update sonar.properties to enable LDAP"
     sed -i 's/#sonar.security.realm=LDAP/sonar.security.realm=LDAP/' odo-sonar/sonar.properties
     echo "Restart sonar: ${sonar_restart_url}"
     output=$(curl -v -s -X POST ${sonar_restart_url} \
-             -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' \
-             -H "X-XSRF-TOKEN: ${sonar_token}" -b .sonarcookies 2>&1)
+        -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H "X-XSRF-TOKEN: ${sonar_token}" -b .sonarcookies 2>&1)
     echo "${output}" | grep HTTP | grep 200 || {
-        echo "${output}"
         rm -rf .sonarcookies
-        exit 1
+        log_fail "$output"
     }
     rm -rf .sonarcookies
     docker restart odo-sonar
     return 0
 }
 
-function init_odo_jenkins
-{
+function init_odo_jenkins() {
     [[ "${ODO_INIT_JENKINS}" == "yes" ]] || return 0
     chmod_dir odo-jenkins
     return 0
 }
 
-function init_odo_jira
-{
+function init_odo_jira() {
     [[ "${ODO_INIT_JIRA}" == "yes" ]] || return 0
+    jira_url=$(grep ODO_JIRA_URL docker-compose.yaml | awk '{print $NF}')
+    jira_mode_url="${jira_url}/secure/SetupMode.jspa"
+    jira_db_url="${jira_url}/secure/SetupDatabse.jspa"
+    jira_app_url="${jira_url}/secure/SetupApplicationProperties.jspa"
+    jira_license_url="${jira_url}/secure/SetupLicense.jspa"
+    echo "Waiting for Jira Software[${jira_url}] running ..."
+    while true; do
+        sleep 2
+        output=$(curl -s -v -l -X GET ${jira_url}/secure/SetupMode!default.jspa 2>&1)
+        echo "${output}" | grep HTTP | grep 200 && break
+    done
+    echo "Setup Mode: ${jira_mode_url}"
+    set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
+    atl_token=$(echo ${set_cookie} | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+    jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
+    output=$(curl -s -v -l -X POST ${jira_mode_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H "Cookie: atlassian.xsrf.token=${atl_token};JSESSION_ID=${jsession_id}" \
+        --data-urlencode 'setupOption=classic' \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "${output}" | grep HTTP | grep 302 || log_fail "$output"
+
+    echo "Setup Database: ${jira_db_url}"
+    set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
+    jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
+    output=$(curl -s -v -l -X POST ${jira_db_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H "Cookie: atlassian.xsrf.token=${atl_token};JSESSION_ID=${jsession_id}" \
+        --data-urlencode 'databaseOption=external' \
+        --data-urlencode 'databaseType=postgres72' \
+        --data-urlencode 'jdbcHostname=odo-pg' \
+        --data-urlencode 'jdbcPort=5432' \
+        --data-urlencode 'jdbcDatabase=jira' \
+        --data-urlencode 'jdbcSid=' \
+        --data-urlencode 'jdbcUsername=postgres' \
+        --data-urlencode 'jdbcPassword=opendevops' \
+        --data-urlencode 'schemaName=public' \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "${output}" | grep HTTP | grep 302 || log_fail "$output"
+
+    echo "Setup Application Properties: ${jira_app_url}"
+    set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
+    jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
+    output=$(curl -s -v -l -X POST ${jira_url}/secure/SetupApplicationProperties.jspa \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H "Cookie: atlassian.xsrf.token=${atl_token};JSESSION_ID=${jsession_id}" \
+        --data-urlencode 'title=Jira' \
+        --data-urlencode 'mode=private' \
+        --data-urlencode "baseURL=${jira_url}" \
+        --data-urlencode 'nextStep=true' \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "${output}" | grep HTTP | grep 200 || log_fail "$output"
+
+    echo "Setup License: ${jira_license_url}"
+    jira_license=$(docker exec -it odo-jira getJiraLicense | tail)
+    set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
+    jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
+    output=$(curl -s -v -l -X POST ${jira_license_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -H "Cookie: atlassian.xsrf.token=${atl_token};JSESSION_ID=${jsession_id}" \
+        --data-urlencode "setupLicenseKey=${jira_license}" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "${output}" | grep HTTP | grep 200 || log_fail "$output"
     return 0
 }
 
-function init_odo_conf
-{
+function init_odo_conf() {
     [[ "${ODO_INIT_CONF}" == "yes" ]] || return 0
     return 0
 }
-function init_odo_gitlab
-{
+function init_odo_gitlab() {
     [[ "${ODO_INIT_GITLAB}" == "yes" ]] || return 0
     return 0
 }
-function init_odo_harbor
-{
+function init_odo_harbor() {
     [[ "${ODO_INIT_HARBOR}" == "yes" ]] || return 0
     return 0
 }
-function init_odo_rancher
-{
+function init_odo_rancher() {
     [[ "${ODO_INIT_RANCHER}" == "yes" ]] || return 0
     return 0
 }
-function init_odo_jms
-{
+function init_odo_jms() {
     [[ "${ODO_INIT_JMS}" == "yes" ]] || return 0
     return 0
 }
@@ -440,10 +482,12 @@ elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
     ${DOCKER_COMPOSE} down
     sleep 2
     ${DOCKER_COMPOSE} ps
+    # Remove generated dirs
     [[ -f .gitignore ]] && {
-        for clean_dir in $(grep 'odo-' .gitignore | grep -v '#')
-        do
+        for clean_dir in $(grep 'odo-' .gitignore | grep -v '#'); do
             rm -rf ${clean_dir}
         done
     }
+    # Check and disable sonar LDAP config
+    sed -i 's/^sonar.security.realm=LDAP/#sonar.security.realm=LDAP/' odo-sonar/sonar.properties
 fi
