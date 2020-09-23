@@ -175,6 +175,7 @@ function set_host_for_sonar() {
 
 function init_odo_pg() {
     [[ "${ODO_INIT_PG}" == "yes" ]] || return 0
+    echo "Waiting for PostgresQL running ..."
     chmod_dir odo-pg
     while true; do
         sleep 1
@@ -182,8 +183,10 @@ function init_odo_pg() {
     done
     db_list=$(docker exec -it odo-pg psql -U postgres -l)
     for db_name in jira conf sonar; do
+        echo "Check and init DB for ${db_name}"
         echo "${db_list}" | grep $db_name || docker exec -it odo-pg createdb -U postgres $db_name
     done
+    echo "Complete to init DB"
     docker exec -it odo-pg psql -U postgres -l
 }
 
@@ -350,7 +353,8 @@ function init_odo_jira() {
     echo "${output}" | grep HTTP | grep 200 || log_fail "$output"
 
     echo "Setup License: ${jira_license_url}"
-    jira_license=$(docker exec -it odo-jira getJiraLicense | tail)
+    get_jira_license=$(docker exec -it odo-jira getJiraLicense | tail)
+    jira_license=$(echo ${get_jira_license})
     set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
     jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
     output=$(curl -s -v -l -X POST ${jira_license_url} \
