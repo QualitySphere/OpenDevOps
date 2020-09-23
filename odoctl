@@ -292,7 +292,7 @@ function init_odo_jira() {
     [[ "${ODO_INIT_JIRA}" == "yes" ]] || return 0
     jira_url=$(grep ODO_JIRA_URL docker-compose.yaml | awk '{print $NF}')
     jira_mode_url="${jira_url}/secure/SetupMode.jspa"
-    jira_db_url="${jira_url}/secure/SetupDatabse.jspa"
+    jira_db_url="${jira_url}/secure/SetupDatabase.jspa"
     jira_app_url="${jira_url}/secure/SetupApplicationProperties.jspa"
     jira_license_url="${jira_url}/secure/SetupLicense.jspa"
     echo "Waiting for Jira Software[${jira_url}] running ..."
@@ -407,12 +407,16 @@ if [[ "${COMPOSE_CMD}" == "start" ]]; then
         init_odo_pg
         init_odo_jenkins
         init_odo_sonar
+        init_odo_jira
+        init_odo_conf
     # if start the odo-svc, check and init it
     else
         echo "${COMPOSE_SVC}" | grep -q "ldap" && init_odo_ldap
         echo "${COMPOSE_SVC}" | grep -q "pg" && init_odo_pg
         echo "${COMPOSE_SVC}" | grep -q "jenkins" && init_odo_jenkins
         echo "${COMPOSE_SVC}" | grep -q "sonar" && init_odo_sonar
+        echo "${COMPOSE_SVC}" | grep -q "jira" && init_odo_jira
+        echo "${COMPOSE_SVC}" | grep -q "conf" && init_odo_conf
     fi
     sleep 2
     ${DOCKER_COMPOSE} ps
