@@ -19,6 +19,8 @@ ODO_INIT_HARBOR='yes'
 ODO_INIT_RANCHER='yes'
 ODO_INIT_JMS='yes'
 
+CURL="curl -s -v -l"
+
 ## Common Function
 function log_error() {
     echo -e "\033[33;6m$@ \033[0m"
@@ -298,32 +300,31 @@ function init_odo_jira() {
     jira_db_url="${jira_url}/secure/SetupDatabase.jspa"
     jira_app_url="${jira_url}/secure/SetupApplicationProperties.jspa"
     jira_license_url="${jira_url}/secure/SetupLicense.jspa"
+    jira_admin_url="${jira_url}/secure/SetupAdminAccount.jspa"
+    jira_mail_url="${jira_url}/secure/SetupMailNotifications.jspa"
     echo "Waiting for Jira Software[${jira_url}] running ..."
     while true; do
         sleep 2
-        output=$(curl -s -v -l -X GET ${jira_url}/secure/SetupMode!default.jspa 2>&1)
-        echo "${output}" | grep HTTP | grep 200 && break
+        output=$($CURL -X GET -c .jira_cookie ${jira_url}/secure/SetupMode!default.jspa 2>&1)
+        echo "${output}" | grep HTTP | grep -E '200|302' && {
+            echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' && break
+        }
     done
     echo "Setup Mode: ${jira_mode_url}"
-    set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
-    atl_token=$(echo ${set_cookie} | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
-    jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
-    output=$(curl -s -v -l -X POST ${jira_mode_url} \
+    atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+    output=$($CURL -c .jira_cookie -b .jira_cookie -X POST ${jira_mode_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        -H "Cookie: atlassian.xsrf.token=${atl_token};JSESSION_ID=${jsession_id}" \
         --data-urlencode 'setupOption=classic' \
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
-    echo "${output}" | grep HTTP | grep 302 || log_fail "$output"
-
+    echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
     echo "Setup Database: ${jira_db_url}"
-    set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
-    jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
-    output=$(curl -s -v -l -X POST ${jira_db_url} \
+    get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+    [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
+    output=$($CURL -c .jira_cookie -b .jira_cookie -X POST ${jira_db_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        -H "Cookie: atlassian.xsrf.token=${atl_token};JSESSION_ID=${jsession_id}" \
         --data-urlencode 'databaseOption=external' \
         --data-urlencode 'databaseType=postgres72' \
         --data-urlencode 'jdbcHostname=odo-pg' \
@@ -335,36 +336,79 @@ function init_odo_jira() {
         --data-urlencode 'schemaName=public' \
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
-    echo "${output}" | grep HTTP | grep 302 || log_fail "$output"
-
+    echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
     echo "Setup Application Properties: ${jira_app_url}"
-    set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
-    jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
+    get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+    [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
     output=$(curl -s -v -l -X POST ${jira_url}/secure/SetupApplicationProperties.jspa \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        -H "Cookie: atlassian.xsrf.token=${atl_token};JSESSION_ID=${jsession_id}" \
         --data-urlencode 'title=Jira' \
         --data-urlencode 'mode=private' \
         --data-urlencode "baseURL=${jira_url}" \
         --data-urlencode 'nextStep=true' \
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
-    echo "${output}" | grep HTTP | grep 200 || log_fail "$output"
-
-    echo "Setup License: ${jira_license_url}"
-    get_jira_license=$(docker exec -it odo-jira getJiraLicense | tail)
-    jira_license=$(echo ${get_jira_license})
-    set_cookie=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}')
-    jsession_id=$(echo ${set_cookie} | awk -F 'JSESSIONID=' '{print $2}' | awk -F ';' '{print $1}')
-    output=$(curl -s -v -l -X POST ${jira_license_url} \
+    echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Generate Jira Software License"
+    jira_license=$(docker exec -it odo-jira getJiraLicense | tail)
+#    jira_license=$(echo ${get_jira_license})
+    echo "Setup Jira Software License: ${jira_license_url}"
+    get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+    [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
+    output=$($CURL -X POST -c .jira_cookie -b .jira_cookie "${jira_url}/secure/SetupLicense!validateLicense.jspa" \
+	    -H 'Accept: */*' \
+	    -H 'Content-Type: application/x-www-form-urlencoded' \
+	    --data-urlencode "licenseToValidate=${jira_license}" \
+        2>&1)
+    get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+    [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
+    output=$($CURL -c .jira_cookie -b .jira_cookie -X POST ${jira_license_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        -H "Cookie: atlassian.xsrf.token=${atl_token};JSESSION_ID=${jsession_id}" \
         --data-urlencode "setupLicenseKey=${jira_license}" \
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
-    echo "${output}" | grep HTTP | grep 200 || log_fail "$output"
+    echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Setup Admin Account: ${jira_admin_url}"
+    get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+    [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
+    output=$($CURL -X POST -c .jira_cookie -b .jira_cookie ${jira_admin_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "fullname=odoadmin" \
+        --data-urlencode "email=odoadmin@qualitysphere.github.io" \
+        --data-urlencode "username=odoadmin" \
+        --data-urlencode "password=opendevops" \
+        --data-urlencode "confirm=opendevops" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Setup Mail Notifications: ${jira_mail_url}"
+    get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+    [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
+    output=$($CURL -X POST -c .jira_cookie -b .jira_cookie ${jira_mail_url} \
+	    -H 'Accept: */*' \
+	    -H 'Content-Type: application/x-www-form-urlencoded' \
+	    --data-urlencode "analytics-enabled=" \
+	    --data-urlencode "noemail=true" \
+        --data-urlencode "name=odoadmin" \
+        --data-urlencode "from=opendevops" \
+        --data-urlencode "prefix=[Jira]" \
+        --data-urlencode "mailservertype=smtp" \
+        --data-urlencode "serverProvider=custom" \
+        --data-urlencode "serverName=" \
+        --data-urlencode "protocol=smtp" \
+        --data-urlencode "port=" \
+        --data-urlencode "timeout=10000" \
+        --data-urlencode "username=" \
+        --data-urlencode "password=" \
+        --data-urlencode "jndiLocation=" \
+        --data-urlencode "type=smtp" \
+        --data-urlencode "testingMailConnection=false" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
     return 0
 }
 
