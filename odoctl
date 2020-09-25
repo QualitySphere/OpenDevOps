@@ -4,6 +4,11 @@ COMPOSE_YAML='docker-compose.yaml'
 COMPOSE_PROJECT='odo'
 DOCKER_COMPOSE="docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT}"
 COMPOSE_CONFIG=$(cat ${COMPOSE_YAML})
+LDAP_DOMAIN=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-ldap-openldap' '{print $2}' | awk -F 'SLAPD_DOMAIN: ' '{print $2}' | awk '{print $1}')
+LDAP_ADMIN="cn=admin,dc=$(echo $LDAP_DOMAIN  | sed 's/\./,dc=/g')"
+LDAP_PASSWD=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-ldap-openldap' '{print $2}' | awk -F 'SLAPD_PASSWORD: ' '{print $2}' | awk '{print $1}')
+PG_USER=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-pg' '{print $2}' | awk -F 'POSTGRES_USER: ' '{print $2}' | awk '{print $1}')
+PG_PASSWD=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-pg' '{print $2}' | awk -F 'POSTGRES_PASSWORD: ' '{print $2}' | awk '{print $1}')
 
 COMPOSE_CMD="${1-''}"
 COMPOSE_SVC="${2-''}"
@@ -208,8 +213,6 @@ function init_odo_ldap() {
     phpldapadmin_index_url="${phpldapadmin_url}/htdocs/index.php"
     phpldapadmin_cmd_url="${phpldapadmin_url}/htdocs/cmd.php"
     _curl_output=".ldapcontent"
-    _ldap_account="cn=admin,dc=qualitysphere,dc=github,dc=io"
-    _ldap_password="opendevops"
     echo "Access LDAP: ${phpldapadmin_index_url}"
     while true; do
         sleep 2
@@ -224,8 +227,8 @@ function init_odo_ldap() {
         --data-urlencode 'cmd=login' \
         --data-urlencode 'server_id=1' \
         --data-urlencode 'nodecode[login_pass]=1' \
-        --data-urlencode "login=${_ldap_account}" \
-        --data-urlencode "login_pass=${_ldap_password}" \
+        --data-urlencode "login=${LDAP_ADMIN}" \
+        --data-urlencode "login_pass=${LDAP_PASSWD}" \
         --data-urlencode 'submit=Authenticate' \
         -o ${_curl_output} 2>&1)
     echo "$output" | grep HTTP | grep 200 || log_fail "$output"
@@ -344,8 +347,8 @@ function init_odo_jira() {
         --data-urlencode 'jdbcPort=5432' \
         --data-urlencode 'jdbcDatabase=jira' \
         --data-urlencode 'jdbcSid=' \
-        --data-urlencode 'jdbcUsername=postgres' \
-        --data-urlencode 'jdbcPassword=opendevops' \
+        --data-urlencode "jdbcUsername=${PG_USER}" \
+        --data-urlencode "jdbcPassword=${PG_PASSWD}" \
         --data-urlencode 'schemaName=public' \
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
@@ -390,11 +393,11 @@ function init_odo_jira() {
     output=$($CURL -X POST ${jira_admin_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        --data-urlencode "fullname=odoadmin" \
-        --data-urlencode "email=odoadmin@qualitysphere.github.io" \
-        --data-urlencode "username=odoadmin" \
-        --data-urlencode "password=opendevops" \
-        --data-urlencode "confirm=opendevops" \
+        --data-urlencode "fullname=admin" \
+        --data-urlencode "email=admin@${LDAP_DOMAIN}" \
+        --data-urlencode "username=admin" \
+        --data-urlencode "password=${LDAP_PASSWD}" \
+        --data-urlencode "confirm=${LDAP_PASSWD}" \
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
     echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
@@ -406,7 +409,7 @@ function init_odo_jira() {
 	    -H 'Content-Type: application/x-www-form-urlencoded' \
 	    --data-urlencode "analytics-enabled=" \
 	    --data-urlencode "noemail=true" \
-        --data-urlencode "name=odoadmin" \
+        --data-urlencode "name=admin" \
         --data-urlencode "from=opendevops" \
         --data-urlencode "prefix=[Jira]" \
         --data-urlencode "mailservertype=smtp" \
@@ -502,8 +505,8 @@ function init_odo_conf() {
         --data-urlencode "dbConfigInfo.port=" \
         --data-urlencode "dbConfigInfo.databaseName=" \
         --data-urlencode "dbConfigInfo.serviceName=" \
-        --data-urlencode "dbConfigInfo.userName=postgres" \
-        --data-urlencode "dbConfigInfo.password=opendevops" \
+        --data-urlencode "dbConfigInfo.userName=${PG_USER}" \
+        --data-urlencode "dbConfigInfo.password=${PG_PASSWD}" \
         --data-urlencode "dbConfigInfo.instanceName=" \
         --data-urlencode "database=" \
         --data-urlencode "atl_token=${atl_token}" \
@@ -520,8 +523,8 @@ function init_odo_conf() {
         --data-urlencode "dbConfigInfo.port=" \
         --data-urlencode "dbConfigInfo.databaseName=" \
         --data-urlencode "dbConfigInfo.serviceName=" \
-        --data-urlencode "dbConfigInfo.userName=postgres" \
-        --data-urlencode "dbConfigInfo.password=opendevops" \
+        --data-urlencode "dbConfigInfo.userName=${PG_USER}" \
+        --data-urlencode "dbConfigInfo.password=${PG_PASSWD}" \
         --data-urlencode "dbConfigInfo.instanceName=" \
         --data-urlencode "database=" \
         --data-urlencode "atl_token=${atl_token}" \
@@ -549,11 +552,11 @@ function init_odo_conf() {
     output=$($CURL -X POST ${conf_admin_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
-        --data-urlencode "username=odoadmin" \
-        --data-urlencode "fullName=odoadmin" \
-        --data-urlencode "email=odoadmin@qualitysphere.github.io" \
-        --data-urlencode "password=opendevops" \
-        --data-urlencode "confirm=opendevops" \
+        --data-urlencode "username=admin" \
+        --data-urlencode "fullName=admin" \
+        --data-urlencode "email=admin@${LDAP_DOMAIN}" \
+        --data-urlencode "password=${LDAP_PASSWD}" \
+        --data-urlencode "confirm=${LDAP_PASSWD}" \
         --data-urlencode "step-next-button=Next" \
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
@@ -561,18 +564,22 @@ function init_odo_conf() {
     rm -rf ${COOKIES}
     return 0
 }
+
 function init_odo_gitlab() {
     [[ "${ODO_INIT_GITLAB}" == "yes" ]] || return 0
     return 0
 }
+
 function init_odo_harbor() {
     [[ "${ODO_INIT_HARBOR}" == "yes" ]] || return 0
     return 0
 }
+
 function init_odo_rancher() {
     [[ "${ODO_INIT_RANCHER}" == "yes" ]] || return 0
     return 0
 }
+
 function init_odo_jms() {
     [[ "${ODO_INIT_JMS}" == "yes" ]] || return 0
     return 0
@@ -687,4 +694,6 @@ elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
     }
     # Check and disable sonar LDAP config
     sed -i 's/^sonar.security.realm=LDAP/#sonar.security.realm=LDAP/' odo-sonar/sonar.properties
+    # Remove cookie file
+    rm -rf ${COOKIES}
 fi
