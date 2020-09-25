@@ -423,6 +423,9 @@ function init_odo_conf() {
     conf_dbchoice_url="${conf_url}/setup/setupdbchoice.action"
     conf_dbtest_url="${conf_url}/setup/setupstandarddb-testconnection.action"
     conf_dbtype_url="${conf_url}/setup/setupdbtype.action"
+    conf_data_url="${conf_url}/setup/setupdata.action"
+    conf_user_url="${conf_url}/setup/setupusermanagementchoice.action"
+    conf_admin_url="${conf_url}/setup/setupadministrator.action"
     echo "Waiting for Confluence Server[${conf_url}] running ..."
     while true
     do
@@ -509,7 +512,37 @@ function init_odo_conf() {
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
     echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
-
+    echo "Setup Data: ${conf_data_url}"
+    output=$($CURL -X POST ${conf_data_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "dbchoiceSelect=Empty+Site" \
+        --data-urlencode "contentChoice=blank" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Setup User Management: ${conf_user_url}"
+    output=$($CURL -X POST ${conf_user_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "userManagementChoice=internal" \
+        --data-urlencode "internal=Manage+users+and+groups+within+Confluence" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Setup Administrator: ${conf_admin_url}"
+    output=$($CURL -X POST ${conf_admin_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "username=odoadmin" \
+        --data-urlencode "fullName=odoadmin" \
+        --data-urlencode "email=odoadmin@qualitysphere.github.io" \
+        --data-urlencode "password=opendevops" \
+        --data-urlencode "confirm=opendevops" \
+        --data-urlencode "step-next-button=Next" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
     return 0
 }
 function init_odo_gitlab() {
