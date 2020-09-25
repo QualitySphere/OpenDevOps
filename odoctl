@@ -19,7 +19,8 @@ ODO_INIT_HARBOR='yes'
 ODO_INIT_RANCHER='yes'
 ODO_INIT_JMS='yes'
 
-CURL="curl -s -v -l"
+COOKIES=".odo_cookies"
+CURL="curl -s -v -l -c ${COOKIES} -b ${COOKIES}"
 
 ## Common Function
 function log_error() {
@@ -305,14 +306,14 @@ function init_odo_jira() {
     echo "Waiting for Jira Software[${jira_url}] running ..."
     while true; do
         sleep 2
-        output=$($CURL -X GET -c .jira_cookie ${jira_url}/secure/SetupMode!default.jspa 2>&1)
+        output=$($CURL -X GET ${jira_url}/secure/SetupMode!default.jspa 2>&1)
         echo "${output}" | grep HTTP | grep -E '200|302' && {
             echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' && break
         }
     done
     echo "Setup Mode: ${jira_mode_url}"
     atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
-    output=$($CURL -c .jira_cookie -b .jira_cookie -X POST ${jira_mode_url} \
+    output=$($CURL -X POST ${jira_mode_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         --data-urlencode 'setupOption=classic' \
@@ -322,7 +323,7 @@ function init_odo_jira() {
     echo "Setup Database: ${jira_db_url}"
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
-    output=$($CURL -c .jira_cookie -b .jira_cookie -X POST ${jira_db_url} \
+    output=$($CURL -X POST ${jira_db_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         --data-urlencode 'databaseOption=external' \
@@ -340,7 +341,7 @@ function init_odo_jira() {
     echo "Setup Application Properties: ${jira_app_url}"
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
-    output=$(curl -s -v -l -X POST ${jira_url}/secure/SetupApplicationProperties.jspa \
+    output=$($CURL -X POST ${jira_url}/secure/SetupApplicationProperties.jspa \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         --data-urlencode 'title=Jira' \
@@ -352,18 +353,19 @@ function init_odo_jira() {
     echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
     echo "Generate Jira Software License"
     jira_license=$(docker exec -it odo-jira getJiraLicense | tail)
-#    jira_license=$(echo ${get_jira_license})
+    echo "${jira_license}"
     echo "Setup Jira Software License: ${jira_license_url}"
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
-    output=$($CURL -X POST -c .jira_cookie -b .jira_cookie "${jira_url}/secure/SetupLicense!validateLicense.jspa" \
+    output=$($CURL -X POST "${jira_url}/secure/SetupLicense!validateLicense.jspa" \
 	    -H 'Accept: */*' \
 	    -H 'Content-Type: application/x-www-form-urlencoded' \
 	    --data-urlencode "licenseToValidate=${jira_license}" \
         2>&1)
+    echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
-    output=$($CURL -c .jira_cookie -b .jira_cookie -X POST ${jira_license_url} \
+    output=$($CURL -X POST ${jira_license_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         --data-urlencode "setupLicenseKey=${jira_license}" \
@@ -373,7 +375,7 @@ function init_odo_jira() {
     echo "Setup Admin Account: ${jira_admin_url}"
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
-    output=$($CURL -X POST -c .jira_cookie -b .jira_cookie ${jira_admin_url} \
+    output=$($CURL -X POST ${jira_admin_url} \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         --data-urlencode "fullname=odoadmin" \
@@ -387,7 +389,7 @@ function init_odo_jira() {
     echo "Setup Mail Notifications: ${jira_mail_url}"
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
-    output=$($CURL -X POST -c .jira_cookie -b .jira_cookie ${jira_mail_url} \
+    output=$($CURL -X POST ${jira_mail_url} \
 	    -H 'Accept: */*' \
 	    -H 'Content-Type: application/x-www-form-urlencoded' \
 	    --data-urlencode "analytics-enabled=" \
@@ -414,6 +416,100 @@ function init_odo_jira() {
 
 function init_odo_conf() {
     [[ "${ODO_INIT_CONF}" == "yes" ]] || return 0
+    conf_url=$(grep ODO_CONF_URL docker-compose.yaml | awk '{print $NF}')
+    conf_start_url="${conf_url}/setup/dosetupstart.action"
+    conf_bundle_url="${conf_url}/setup/doselectbundle.action"
+    conf_license_url="${conf_url}/setup/dosetuplicense.action"
+    conf_dbchoice_url="${conf_url}/setup/setupdbchoice.action"
+    conf_dbtest_url="${conf_url}/setup/setupstandarddb-testconnection.action"
+    conf_dbtype_url="${conf_url}/setup/setupdbtype.action"
+    echo "Waiting for Confluence Server running ..."
+    while true
+    do
+        sleep 2
+        output=$($CURL -X GET ${conf_url}/setup/setupstart.action 2>&1)
+        echo "${output}" | grep HTTP | grep -E '302|200' && {
+            atl_token=$(echo "${output}" | grep Location | awk -F 'atl_token=' '{print $2}' | sed 's/\r//g')
+            [[ -z "$atl_token" ]] || break
+        }
+    done
+    echo "Start Setup Confluence: ${conf_start_url}"
+    output=$($CURL -X GET "${conf_start_url}?setupType=custom&atl_token=${atl_token}" 2>&1)
+    echo "$output" | grep HTTP | grep -E '302|200' || log_fail "$output"
+    echo "Select Bundle: ${conf_bundle_url}"
+    output=$($CURL -X POST ${conf_bundle_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode 'pluginKeys=' \
+        --data-urlencode 'setup-next-button=Next' \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Get server ID: ${conf_url}/setup/setuplicense.action"
+    output=$($CURL -X GET ${conf_url}/setup/setuplicense.action 2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_error "$output"
+    conf_server_id=$(echo "$output"| grep 'name="serverId"' | awk -F 'value=' '{print $2}' | awk -F '"' '{print $2}')
+    echo "${conf_server_id}"
+    echo "Generate conf license"
+    conf_license=$(docker exec -it odo-conf getConfLicense ${conf_server_id} | tail -8)
+    echo "$conf_license"
+    echo "Setup license: ${conf_license_url}"
+    output=$($CURL -X POST ${conf_license_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "selectedPluginKeys=" \
+        --data-urlencode "confLicenseString=${conf_license}" \
+        --data-urlencode "setupTypeCustom=next" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Choice DB: ${conf_dbchoice_url}"
+    output=$($CURL -X POST ${conf_dbchoice_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "thisNodeClustered=false" \
+        --data-urlencode "dbChoice=custom" \
+        --data-urlencode "setup-next-button=Next" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Test DB: ${conf_dbtest_url}"
+    output=$($CURL -X POST ${conf_dbtest_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "dbConfigInfo.databaseType=postgresql" \
+        --data-urlencode "dbConfigInfo.simple=false" \
+        --data-urlencode "dbConfigInfo.databaseUrl=jdbc:postgresql://odo-pg:5432/conf" \
+        --data-urlencode "dbConfigInfo.hostname=" \
+        --data-urlencode "dbConfigInfo.port=" \
+        --data-urlencode "dbConfigInfo.databaseName=" \
+        --data-urlencode "dbConfigInfo.serviceName=" \
+        --data-urlencode "dbConfigInfo.userName=postgres" \
+        --data-urlencode "dbConfigInfo.password=opendevops" \
+        --data-urlencode "dbConfigInfo.instanceName=" \
+        --data-urlencode "database=" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Setup DB: ${conf_dbtype_url}"
+    output=$($CURL -X POST ${conf_dbtype_url} \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "dbConfigInfo.databaseType=postgresql" \
+        --data-urlencode "dbConfigInfo.simple=false" \
+        --data-urlencode "dbConfigInfo.databaseUrl=jdbc:postgresql://odo-pg:5432/conf" \
+        --data-urlencode "dbConfigInfo.hostname=" \
+        --data-urlencode "dbConfigInfo.port=" \
+        --data-urlencode "dbConfigInfo.databaseName=" \
+        --data-urlencode "dbConfigInfo.serviceName=" \
+        --data-urlencode "dbConfigInfo.userName=postgres" \
+        --data-urlencode "dbConfigInfo.password=opendevops" \
+        --data-urlencode "dbConfigInfo.instanceName=" \
+        --data-urlencode "database=" \
+        --data-urlencode "atl_token=${atl_token}" \
+        2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+
     return 0
 }
 function init_odo_gitlab() {
