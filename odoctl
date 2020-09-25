@@ -272,7 +272,7 @@ function init_odo_sonar() {
         -H 'Accept: application/json' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -H "X-XSRF-TOKEN: ${sonar_token}" \
-        -d 'key=ldap' \
+        --data-urlencode 'key=ldap' \
         2>&1)
     echo "${output}" | grep HTTP | grep 204 || log_fail "${output}"
     echo "Update sonar.properties to enable LDAP"
@@ -306,7 +306,7 @@ function init_odo_jira() {
     echo "Waiting for Jira Software[${jira_url}] running ..."
     while true; do
         sleep 2
-        output=$($CURL -X GET ${jira_url}/secure/SetupMode!default.jspa 2>&1)
+        output=$($CURL -X GET "${jira_url}" 2>&1)
         echo "${output}" | grep HTTP | grep -E '200|302' && {
             atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
             [[ -z "${atl_token}" ]] || break
