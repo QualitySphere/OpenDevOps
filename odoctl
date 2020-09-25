@@ -204,6 +204,7 @@ function init_odo_ldap() {
     echo "Access LDAP"
     while true; do
         sleep 2
+        rm -rf ${COOKIES}
         output=$($CURL -X GET "$phpldapadmin_url/htdocs/index.php" -o ${_curl_output} 2>&1)
         echo "$output" | grep HTTP | grep 200 && break
 #        echo "$output" | grep HTTP | grep 200 && {
@@ -249,11 +250,13 @@ function init_odo_sonar() {
     echo "Waiting for SonarQube[${sonar_url}] running ..."
     while true; do
         sleep 2
+        rm -rf ${COOKIES}
         $CURL -X GET ${sonar_status_url} 2>&1 | grep HTTP | grep 200 && break
     done
     echo "Login SonarQube[${sonar_login_url}] ..."
     while true; do
         sleep 2
+        rm -rf ${COOKIES}
         output=$($CURL -X POST ${sonar_login_url} \
             -H 'Accept: application/json' \
             -H 'Content-Type: application/x-www-form-urlencoded' \
@@ -284,6 +287,7 @@ function init_odo_sonar() {
         -H "X-XSRF-TOKEN: ${sonar_token}" \
         2>&1)
     echo "${output}" | grep HTTP | grep 200 || log_fail "$output"
+    rm -rf ${COOKIES}
     docker restart odo-sonar
     return 0
 }
@@ -306,9 +310,11 @@ function init_odo_jira() {
     echo "Waiting for Jira Software[${jira_url}] running ..."
     while true; do
         sleep 2
+        rm -rf ${COOKIES}
         output=$($CURL -X GET "${jira_url}" 2>&1)
         echo "${output}" | grep HTTP | grep -E '200|302' && {
             atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
+            echo "${atl_token}"
             [[ -z "${atl_token}" ]] || break
         }
     done
@@ -411,6 +417,7 @@ function init_odo_jira() {
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
     echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    rm -rf ${COOKIES}
     return 0
 }
 
@@ -430,6 +437,7 @@ function init_odo_conf() {
     while true
     do
         sleep 2
+        rm -rf ${COOKIES}
         output=$($CURL -X GET ${conf_url}/setup/setupstart.action 2>&1)
         echo "${output}" | grep HTTP | grep -E '302|200' && {
             atl_token=$(echo "${output}" | grep Location | awk -F 'atl_token=' '{print $2}' | sed 's/\r//g')
@@ -543,6 +551,7 @@ function init_odo_conf() {
         --data-urlencode "atl_token=${atl_token}" \
         2>&1)
     echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    rm -rf ${COOKIES}
     return 0
 }
 function init_odo_gitlab() {
