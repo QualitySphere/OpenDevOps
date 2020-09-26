@@ -30,12 +30,12 @@ CURL="curl -s -v --location -c ${COOKIES} -b ${COOKIES}"
 
 ## Common Function
 function log_error() {
-    echo -e "\033[33;6m$@ \033[0m"
+    echo -e "\033[33;3m$@ \033[0m"
     exit 1
 }
 
 function log_fail() {
-    echo -e "\033[31;6m[FAIL] Oops! Looks like we have some trouble ...\033[0m"
+    echo -e "\033[31;3m[FAIL] Whoops! Looks like we have some trouble ...\033[0m"
     echo -e "$@"
     exit 1
 }
@@ -122,7 +122,7 @@ function check_env() {
     }
     for _tool in "docker" "docker-compose" "curl"; do
         output=$(${_tool} --version 2>&1) || {
-            echo -e "\033[33;6m${_tool} is required in this machine \033[0m"
+            echo -e "\033[33;3m${_tool} is required in this machine \033[0m"
             echo "${output}"
             exit 1
         }
@@ -433,7 +433,7 @@ function init_odo_jira() {
 function init_odo_conf() {
     [[ "${ODO_INIT_CONF}" == "yes" ]] || return 0
     conf_url=$(grep ODO_CONF_URL docker-compose.yaml | awk '{print $NF}')
-    [[ "${conf_url}" == "" ]] && jira_url="http://localhost:$(get_odo_service_port odo-conf)"
+    [[ "${conf_url}" == "" ]] && conf_url="http://localhost:$(get_odo_service_port odo-conf)"
     conf_start_url="${conf_url}/setup/dosetupstart.action"
     conf_bundle_url="${conf_url}/setup/doselectbundle.action"
     conf_license_url="${conf_url}/setup/dosetuplicense.action"
@@ -567,6 +567,104 @@ function init_odo_conf() {
 
 function init_odo_gitlab() {
     [[ "${ODO_INIT_GITLAB}" == "yes" ]] || return 0
+    gitlab_url=$(grep ODO_GITLAB_URL docker-compose.yaml | awk '{print $NF}')
+    gitlab_passwd_url="${gitlab_url}/users/password"
+    gitlab_login_url="${gitlab_url}/users/sign_in"
+    gitlab_setting_url="${gitlab_url}/admin/application_settings/general"
+    [[ "${gitlab_url}" == "" ]] && gitlab_url="http://localhost:$(get_odo_service_port odo-gitlab)"
+    echo "Waiting for GitLab[${gitlab_url}] running ..."
+    while true
+    do
+        sleep 2
+        rm -rf ${COOKIES}
+        output=$($CURL -X GET ${gitlab_url} 2>&1)
+        echo "${output}" | grep HTTP | grep -E '302|200' && {
+            reset_password_token=$(echo "${output}" | \
+	        grep Location | \
+		grep 'reset_password_token' | \
+	        awk -F 'reset_password_token=' '{print $2}' | \
+		sed 's/\r//g')
+            auth_token=$(echo "$output" | \
+		grep 'name="authenticity_token"' | \
+	        awk -F 'name="authenticity_token"' '{print $2}' | \
+	        awk -F 'value="' '{print $2}' | \
+	        awk -F '"' '{print $1}')
+            [[ -z "$reset_password_token" ]] || {
+                [[ -z "$auth_token" ]] || {
+		    echo "Auth Token: $auth_token"
+	            break
+	        }
+	    }
+        }
+    done
+    echo "Reset GitLab password: ${gitlab_passwd_url}"
+    output=$($CURL -X POST ${gitlab_passwd_url} \
+	    -H 'Accept: */*' \
+	    -H 'Content-Type: application/x-www-form-urlencoded' \
+	    --data-urlencode "_method=put" \
+	    --data-urlencode "authenticity_token=${auth_token}" \
+	    --data-urlencode "user[reset_password_token]=${reset_password_token}" \
+	    --data-urlencode "user[password]=${LDAP_PASSWD}" \
+	    --data-urlencode "user[password_confirmation]=${LDAP_PASSWD}" \
+	    2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Login GitLab: ${gitlab_login_url}"
+    output=$($CURL -X GET ${gitlab_login_url} 2>&1)
+    echo "${output}" | grep HTTP | grep -E '302|200' && {
+        auth_token=$(echo "$output" | \
+	    grep 'action="/users/sign_in"' -A 5 | \
+	    grep 'name="authenticity_token"' | \
+	    awk -F 'name="authenticity_token"' '{print $2}' | \
+	    awk -F 'value="' '{print $2}' | \
+	    awk -F '"' '{print $1}')
+        echo "Auth Token: $auth_token"
+    }
+    output=$($CURL -X POST ${gitlab_login_url} \
+	    -H 'Accept: */*' \
+	    -H 'Content-Type: application/x-www-form-urlencoded' \
+	    --data-urlencode "authenticity_token=${auth_token}" \
+	    --data-urlencode "user[login]=root" \
+	    --data-urlencode "user[password]=${LDAP_PASSWD}" \
+	    --data-urlencode "user[remember_me]=0" \
+	    2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    echo "Disable GitLab Sign Up: ${gitlab_setting_url}"
+    output=$($CURL -X GET ${gitlab_setting_url} 2>&1)
+    echo "${output}" | grep HTTP | grep -E '302|200' && {
+        auth_token=$(echo "$output" | \
+	    grep -A 5 'general#js-signup-settings' | \
+	    grep 'name="authenticity_token"' | \
+	    awk -F 'name="authenticity_token"' '{print $2}' | \
+	    awk -F 'value="' '{print $2}' | \
+	    awk -F '"' '{print $1}')
+        echo "Auth Token: $auth_token"
+    }
+    output=$($CURL -X POST ${gitlab_setting_url} \
+	    -H 'Accept: */*' \
+	    -H 'Content-Type: multipart/form-data' \
+	    --form "utf8=✓" \
+	    --form "_method=patch" \
+	    --form "authenticity_token=${auth_token}" \
+	    --form "application_setting[signup_enabled]=0" \
+	    --form "application_setting[send_user_confirmation_mail]=0" \
+	    --form "application_setting[minimum_password_length]=8" \
+	    --form "application_setting[domain_whitelist_raw]=" \
+	    --form "application_setting[domain_blacklist_enabled]=0" \
+	    --form "blacklist_type=raw" \
+	    --form "application_setting[domain_blacklist_file]=" \
+	    --form "application_setting[domain_blacklist_raw]=" \
+	    --form "application_setting[email_restrictions_enabled]=0" \
+	    --form "application_setting[email_restrictions]=" \
+	    --form "application_setting[after_sign_up_text]=" \
+	    2>&1)
+    echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
+    rm -rf ${COOKIES}
+    echo "Modity config file to enable LDAP"
+    cat <<EOF >> odo-gitlab/config/gitlab.rb
+#### ODO LDAP Configuration
+EOF
+    echo "Restart GitLab"
+    docker restart odo-gitlab
     return 0
 }
 
@@ -609,6 +707,10 @@ if [[ "${COMPOSE_CMD}" == "start" ]]; then
         init_odo_sonar
         init_odo_jira
         init_odo_conf
+        init_odo_gitlab
+        init_odo_rancher
+        init_odo_harbor
+        init_odo_jms
     # if start the odo-svc, check and init it
     else
         echo "${COMPOSE_SVC}" | grep -q "ldap" && init_odo_ldap
@@ -617,6 +719,10 @@ if [[ "${COMPOSE_CMD}" == "start" ]]; then
         echo "${COMPOSE_SVC}" | grep -q "sonar" && init_odo_sonar
         echo "${COMPOSE_SVC}" | grep -q "jira" && init_odo_jira
         echo "${COMPOSE_SVC}" | grep -q "conf" && init_odo_conf
+        echo "${COMPOSE_SVC}" | grep -q "gitlab" && init_odo_gitlab
+        echo "${COMPOSE_SVC}" | grep -q "rancher" && init_odo_rancher
+        echo "${COMPOSE_SVC}" | grep -q "harbor" && init_odo_harbor
+        echo "${COMPOSE_SVC}" | grep -q "jms" && init_odo_jms
     fi
     sleep 2
     ${DOCKER_COMPOSE} ps
@@ -678,9 +784,9 @@ elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     fi
 # Cleanup all
 elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
-    echo -en "\033[31;6m [ DANGER ] \033[0m"
-    echo -e "\033[33;6mThis action will wipe all ODO data\033[0m"
-    echo -en "\033[33;6mDo you really wanna to this? \033[0m"
+    echo -en "\033[31;3m [ DANGER ] \033[0m"
+    echo -e "\033[33;3mThis action will wipe all ODO data\033[0m"
+    echo -en "\033[33;3mDo you really wanna to this? \033[0m"
     read -p "[y/N] " _CLEANUP
     [[ "${_CLEANUP,,}" == 'y' ]] || log_error "Abort cleanup"
     ${DOCKER_COMPOSE} down
