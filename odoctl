@@ -303,6 +303,8 @@ function init_odo_sonar() {
 function init_odo_jenkins() {
     [[ "${ODO_INIT_JENKINS}" == "yes" ]] || return 0
     chmod_dir odo-jenkins
+    return 0
+    ## Need more debug
     jenkins_url=$(grep ODO_JENKINS_URL docker-compose.yaml | awk '{print $NF}')
     [[ "${jenkins_url}" == "" ]] && jenkins_url="http://localhost:$(get_odo_service_port odo-jenkins)"
     jenkins_login_url="${jenkins_url}/login"
@@ -316,7 +318,7 @@ function init_odo_jenkins() {
         output=$($CURL -X GET "${jenkins_login_url}" 2>&1)
         echo "${output}" | grep HTTP | grep -E '200|302' && break
     done
-    echo "Login Jenkins: ${jenkins_security_url}"
+    echo "Unlock Jenkins: ${jenkins_security_url}"
     j_password=$(docker exec -it odo-jenkins sh -c 'cat /var/jenkins_home/secrets/initialAdminPassword' | sed 's/\r//g')
     j_crumb=$(echo "$output" | grep '"Jenkins-Crumb"' | awk -F '"Jenkins-Crumb"' '{print $2}' | awk -F '"' '{print $2}')
     output=$($CURL -X POST "${jenkins_security_url}" \
@@ -326,7 +328,7 @@ function init_odo_jenkins() {
         --data-urlencode 'j_username=admin' \
         --data-urlencode "j_password=${j_password}" \
         --data-urlencode "Jenkins-Crumb=${j_crumb}" \
-        --data-urlencode "json={\"from\":\"/\",\"j_username\":\"admin\",\"j_password\":\"${j_password}\",\"\$redact\":\"j_password\",\"Jenkins-Crumb\":\"${j_crumb}\"}" \
+        --data-urlencode "json={\"from\":\"\",\"j_username\":\"admin\",\"j_password\":\"${j_password}\",\"\$redact\":\"j_password\",\"Jenkins-Crumb\":\"${j_crumb}\"}" \
         2>&1)
     echo "${output}" | grep HTTP | grep 200 || log_fail "${output}"
     echo "Install Plugins: ${jenkins_plugin_url}"
@@ -347,7 +349,6 @@ function init_odo_jenkins() {
         --data-urlencode "Jenkins-Crumb=${j_crumb}" \
         2>&1)
     echo "${output}" | grep HTTP | grep 200 || log_fail "${output}"
-
     return 0
 }
 

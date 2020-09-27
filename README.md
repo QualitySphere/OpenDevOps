@@ -47,47 +47,19 @@ Optimum | 16 core | 32 G
 #### Configuration
 
 - **OpenLDAP**
-  - Access phpLDAPadmin `http://ODO-HOST:18880` and click `login` 
-  - Input `cn=admin,dc=qualitysphere,dc=github,dc=io` as Login DN and `opendevops` as Password, and then click `Authenticate` <br>![](doc/images/odo-ldap-01.png)
-  - Click `import` button and copy content from `odo-ldap/ssp/odo_users.ldif` into the text area <br>![](doc/images/odo-ldap-02.png)
-  - Click `Proceed` to complete OpenLDAP configuration <br>![](doc/images/odo-ldap-03.png)
+  - Auto-init
 - **Self** **Service** **Password**
   - Access Self Service Password `http://ODO-HOST:18080`
   - Try to update default account `odo`'s password to validate SSP
   - Try to update `odo`'s password via E-mail. <br>if you find there is no hostname in the reset password link, you can update `$reset_url` in `odo-ldap/ssp/config.inc.php`
 - **Jira** **Software**
-  - Access Jira Software `http://ODO-HOST:8080` and select `I'll set it up myself` <br>![](doc/images/odo-jira-01.png)
-  - Input database information<br>hostname can use container name `odo-pg`, DB name is `jira` and Pg default account/password is `postgres/opendevops` <br> click `Test Connection` to check it <br>![](doc/images/odo-jira-02.png)
-  - Wait while the database is set up. This may take a minute. <br>Click `Next` to set up application properties. <br>![](doc/images/odo-jira-03.png)
-  - If there is a specify license key page. Go back to ODO-HOST server run `./odoctl license jira` <br>Copy generated license key and input the text area <br>![](doc/images/odo-jira-04.png)
-  - Click `Next` to complete Jira Software installation
-  - Create administrator account <br>![](doc/images/odo-jira-05.png)
-  - Click `Next` and then `Finish` Jira Software configuration
+  - Auto-init
 - **Confluence**
-  - Access Confluence Server `http://ODO-HOST:8090` and click `Next`
-  - Get `Server ID` from license key page and then go back to ODO-HOST to run `./odoctl license conf <serverId>` to generate license key
-  - Copy the license key and active Confluence Server <br>![](doc/images/odo-conf-01.png)
-  - Select `My own database` and click `Next` <br>![](doc/images/odo-conf-02.png)
-  - Set up database <br>hostname can use container name `odo-pg`, DB name is `conf` and Pg default account/password is `postgres/opendevops` <br>Click `Test connection` to check data correction <br>![](doc/images/odo-conf-03.png)
-  - Click `Empty Site` to start configure user management <br>![](doc/images/odo-conf-04.png)
-  - Select `Manage users and groups within Confluence` and create administrator for Confluence <br>![](doc/images/odo-conf-05.png)
-  - Click `Next` to complete Confluence configuration
+  - Auto-init
 - **GitLab**
-  - Waiting for odo-gitlab container's state change to `healty` <br>![](doc/images/odo-gitlab-01.png)
-  - Access GitLab `http://ODO-HOST:12080` to set password for the default admin account `root` <br>![](doc/images/odo-gitlab-02.png)
-  - Sign in GitLab with `root` <br>![](doc/images/odo-gitlab-03.png)
-  - Click `Admin Area` button <br>![](doc/images/odo-gitlab-04.png)
-  - Select `Settings -> General` menu <br>![](doc/images/odo-gitlab-05.png)
-  - Find `Sign-up restrictions` and uncheck `Sign-up enabled`, click `save` to disable sign-up feature <br>![](doc/images/odo-gitlab-06.png)
-  - Go back to ODO-HOST server and modify `odo-gitlab/config/gitlab.rb` to enable and config LDAP <br>![](doc/images/odo-gitlab-07.png)
-  - Run `./odoctl restart gitlab` to restart GitLab
+  - Auto-init
 - **SonarQube**
-  - Access SonarQube `http://ODO-HOST:9000` and click `Log in` 
-  - Login via default admin account/password `admin/admin`
-  - Click `Administration -> Marketplace` <br>search `LDAP` plugin and try to install it <br>![](doc/images/odo-sonar-01.png)
-  - Click `Restart Server` to complete plugin installation <br>![](doc/images/odo-sonar-02.png)
-  - Go back to ODO-HOST to edit `odo-sonar/sonar.properties` file to enable LDAP <br>![](doc/images/odo-sonar-03.png)
-  - Run `./odoctl restart sonar` to restart SonarQube
+  - Auto-init
 - **Jenkins**
   - Access Jenkins `http://ODO-HOST:15080` to unlock it
   - You can get `initialAdminPassword` via otoctl tool `./odoctl license jenkins` in ODO-HOST <br>![](doc/images/odo-jenkins-01.png)
