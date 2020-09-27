@@ -30,12 +30,12 @@ CURL="curl -s -v --location -c ${COOKIES} -b ${COOKIES}"
 
 ## Common Function
 function log_error() {
-    echo -e "\033[33;3m$@ \033[0m"
+    echo -e "\033[33;1m$@ \033[0m"
     exit 1
 }
 
 function log_fail() {
-    echo -e "\033[31;3m[FAIL] Whoops! Looks like we have some trouble ...\033[0m"
+    echo -e "\033[31;1m[FAIL] Whoops! Looks like we have some trouble ...\033[0m"
     echo -e "$@"
     exit 1
 }
@@ -122,7 +122,7 @@ function check_env() {
     }
     for _tool in "docker" "docker-compose" "curl"; do
         output=$(${_tool} --version 2>&1) || {
-            echo -e "\033[33;3m${_tool} is required in this machine \033[0m"
+            echo -e "\033[33;1m${_tool} is required in this machine \033[0m"
             echo "${output}"
             exit 1
         }
@@ -642,7 +642,6 @@ function init_odo_gitlab() {
     output=$($CURL -X POST ${gitlab_setting_url} \
 	    -H 'Accept: */*' \
 	    -H 'Content-Type: multipart/form-data' \
-	    --form "utf8=✓" \
 	    --form "_method=patch" \
 	    --form "authenticity_token=${auth_token}" \
 	    --form "application_setting[signup_enabled]=0" \
@@ -651,7 +650,6 @@ function init_odo_gitlab() {
 	    --form "application_setting[domain_whitelist_raw]=" \
 	    --form "application_setting[domain_blacklist_enabled]=0" \
 	    --form "blacklist_type=raw" \
-	    --form "application_setting[domain_blacklist_file]=" \
 	    --form "application_setting[domain_blacklist_raw]=" \
 	    --form "application_setting[email_restrictions_enabled]=0" \
 	    --form "application_setting[email_restrictions]=" \
@@ -660,8 +658,31 @@ function init_odo_gitlab() {
     echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
     rm -rf ${COOKIES}
     echo "Modity config file to enable LDAP"
+    _ldap_base="ou=users,dc=$(echo $LDAP_DOMAIN  | sed 's/\./,dc=/g')"
     cat <<EOF >> odo-gitlab/config/gitlab.rb
 #### ODO LDAP Configuration
+gitlab_rails['ldap_enabled'] = true
+gitlab_rails['ldap_servers'] = YAML.load <<-'EOS'
+  main:
+    label: 'LDAP'
+    host: 'odo-ldap-openldap'
+    port: 389
+    uid: 'cn'
+    bind_dn: '$LDAP_ADMIN'
+    password: '${LDAP_PASSWD}'
+    encryption: 'plain'
+    verify_certificates: true
+    smartcard_auth: false
+    active_directory: false
+    allow_username_or_email_login: true
+    lowercase_usernames: false
+    base: '$_ldap_base'
+    user_filter: ''
+    attributes:
+      username: ['cn']
+      email: ['mail']
+      name: 'displayName'
+EOS
 EOF
     echo "Restart GitLab"
     docker restart odo-gitlab
@@ -784,9 +805,9 @@ elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     fi
 # Cleanup all
 elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
-    echo -en "\033[31;3m [ DANGER ] \033[0m"
-    echo -e "\033[33;3mThis action will wipe all ODO data\033[0m"
-    echo -en "\033[33;3mDo you really wanna to this? \033[0m"
+    echo -en "\033[31;1m [ DANGER ] \033[0m"
+    echo -e "\033[33;1mThis action will wipe all ODO data\033[0m"
+    echo -en "\033[33;1mDo you really wanna to this? \033[0m"
     read -p "[y/N] " _CLEANUP
     [[ "${_CLEANUP,,}" == 'y' ]] || log_error "Abort cleanup"
     ${DOCKER_COMPOSE} down
