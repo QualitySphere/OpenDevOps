@@ -303,6 +303,51 @@ function init_odo_sonar() {
 function init_odo_jenkins() {
     [[ "${ODO_INIT_JENKINS}" == "yes" ]] || return 0
     chmod_dir odo-jenkins
+    jenkins_url=$(grep ODO_JENKINS_URL docker-compose.yaml | awk '{print $NF}')
+    [[ "${jenkins_url}" == "" ]] && jenkins_url="http://localhost:$(get_odo_service_port odo-jenkins)"
+    jenkins_login_url="${jenkins_url}/login"
+    jenkins_security_url="${jenkins_url}/j_acegi_security_check"
+    jenkins_plugin_url="${jenkins_url}/pluginManager/installPlugins"
+    jenkins_restart_url="${jenkins_url}/updateCenter/safeRestart"
+    echo "Waiting for Jenkins[${jenkins_url}] running ..."
+    while true; do
+        sleep 2
+        rm -rf ${COOKIES}
+        output=$($CURL -X GET "${jenkins_url}/login?from=%2F" 2>&1)
+        echo "${output}" | grep HTTP | grep -E '200|302' && break
+    done
+    echo "Login Jenkins: ${jenkins_login_url}"
+    j_password=$(docker exec -it odo-jenkins sh -c 'cat /var/jenkins_home/secrets/initialAdminPassword')
+    j_crumb=$(echo "$output" | grep '"Jenkins-Crumb"' | awk -F '"Jenkins-Crumb"' '{print $2}' | awk -F '"' '{print $2}')
+    output=$($CURL -X POST "${jenkins_security_url}" \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode 'from=/' \
+        --data-urlencode 'j_username=admin' \
+        --data-urlencode "j_password=${j_password}" \
+        --data-urlencode "Jenkins-Crumb=${j_crumb}" \
+        --data-urlencode "json={\"from\":\"/\",\"j_username\":\"admin\",\"j_password\":\"${j_password}\",\"\$redact\":\"j_password\",\"Jenkins-Crumb\":\"${j_crumb}\"" \
+        2>&1)
+    echo "${output}" | grep HTTP | grep 200 || log_fail "${output}"
+    echo "Install Plugins: ${jenkins_plugin_url}"
+    j_crumb=$(echo "$output" | grep '"Jenkins-Crumb"' | awk -F '"Jenkins-Crumb"' '{print $2}' | awk -F '"' '{print $2}')
+    output=$($CURL -X POST "${jenkins_security_url}" \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "Jenkins-Crumb=${j_crumb}" \
+        --data-urlencode 'dynamicLoad=true' \
+        --data-urlencode 'plugins=["cloudbees-folder","antisamy-markup-formatter","build-timeout","credentials-binding","timestamper","ws-cleanup","workflow-aggregator","pipeline-stage-view","git","subversion","ssh-slaves","matrix-auth","pam-auth","ldap","email-ext","mailer","localization-zh-cn","htmlpublisher","gitlab-plugin","git-parameter","authorize-project","publish-over-ssh","emailext-template","ssh"]' \
+        2>&1)
+    echo "${output}" | grep HTTP | grep 200 || log_fail "${output}"
+    echo "Restart Jenkins: ${jenkins_restart_url}"
+    j_crumb=$(echo "$output" | grep '"Jenkins-Crumb"' | awk -F '"Jenkins-Crumb"' '{print $2}' | awk -F '"' '{print $2}')
+    output=$($CURL -X POST "${jenkins_restart_url}" \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "Jenkins-Crumb=${j_crumb}" \
+        2>&1)
+    echo "${output}" | grep HTTP | grep 200 || log_fail "${output}"
+
     return 0
 }
 
@@ -568,10 +613,10 @@ function init_odo_conf() {
 function init_odo_gitlab() {
     [[ "${ODO_INIT_GITLAB}" == "yes" ]] || return 0
     gitlab_url=$(grep ODO_GITLAB_URL docker-compose.yaml | awk '{print $NF}')
+    [[ "${gitlab_url}" == "" ]] && gitlab_url="http://localhost:$(get_odo_service_port odo-gitlab)"
     gitlab_passwd_url="${gitlab_url}/users/password"
     gitlab_login_url="${gitlab_url}/users/sign_in"
     gitlab_setting_url="${gitlab_url}/admin/application_settings/general"
-    [[ "${gitlab_url}" == "" ]] && gitlab_url="http://localhost:$(get_odo_service_port odo-gitlab)"
     echo "Waiting for GitLab[${gitlab_url}] running ..."
     while true
     do
