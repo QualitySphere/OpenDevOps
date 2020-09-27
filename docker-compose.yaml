@@ -147,20 +147,16 @@ services:
       - ./odo-sonar/extensions:/opt/sonarqube/extensions
       - ./odo-sonar/sonar.properties:/opt/sonarqube/conf/sonar.properties
 
-#  odo-harbor:
-#    image: registry.cn-hangzhou.aliyuncs.com/bxwill/harbor
-#    container_name: odo-harbor
-#    restart: always
-#    deploy:
-#      resources:
-#        limits:
-#          cpus: '2'
-#          memory: '8G'
-#    ports:
-#      - 18xxx:8080
-#      - 18xxx:50000
-#    volumes:
-#      - ./odo-harbor/:/var/
+  odo-harbor:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/harbor:installer-2.1.0
+    container_name: odo-harbor
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: '512M'
+    volumes:
+      - ./odo-harbor/:/workspace/
 
   odo-rancher:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/rancher:2.4.8
@@ -216,7 +212,7 @@ services:
 #      ODO_CONF_URL: http://localhost:8090
 #      ODO_SSP_URL: http://localhost:18080
 #      ODO_GITLAB_URL: http://localhost:12080
-#      ODO_HARBOR_URL: http://localhost
+#      ODO_HARBOR_URL: http://localhost:16080
 #      ODO_SONAR_URL: http://localhost:9000
 #      ODO_JENKINS_URL: http://localhost:15080
 #      ODO_JMS_URL: http://localhost:17080

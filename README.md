@@ -33,7 +33,7 @@
 Type | CPU | Memory 
 ----|----|----
 Minimum | 4 core | 8 G
-Recommend | 8 core | 16 G
+Recommended | 8 core | 16 G
 Optimum | 16 core | 32 G
 
 #### Deployment

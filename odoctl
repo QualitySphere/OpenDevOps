@@ -76,7 +76,7 @@ $0 ${COMPOSE_CMD} <SERVICE>:
     sonar     - SonarQube Community Edition
     jenkins   - Jenkins
     gitlab    - GitLab Community Edition
-    harbor    - Harbor [Not Support]
+    harbor    - Harbor
     rancher   - Rancher
     jms       - JumpServer
     portal    - DevOps Portal
@@ -143,7 +143,7 @@ function check_odo_cli() {
     elif [[ "${COMPOSE_CMD}" == "down" ]]; then
         return 0
     else
-        echo "all ldap pg jira conf sonar jenkins gitlab rancher jms portal" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
+        echo "all ldap pg jira conf sonar jenkins gitlab rancher jms portal harbor" | grep -qw "${COMPOSE_SVC}" || help_doc_svc
     fi
     return 0
 }
@@ -166,7 +166,7 @@ function check_odo_exist() {
     [[ -d odo-jira ]] && ODO_INIT_JIRA='no'
     [[ -d odo-conf ]] && ODO_INIT_CONF='no'
     [[ -d odo-gitlab/config ]] && ODO_INIT_GITLAB='no'
-    [[ -d odo-harbor ]] && ODO_INIT_HARBOR='no'
+    [[ -f odo-harbor/docker-compose.yml ]] && ODO_INIT_HARBOR='no'
     [[ -d odo-rancher ]] && ODO_INIT_RANCHER='no'
     [[ -d odo-jms/data ]] && ODO_INIT_JMS='no'
     return 0
@@ -736,7 +736,25 @@ EOF
 }
 
 function init_odo_harbor() {
-    [[ "${ODO_INIT_HARBOR}" == "yes" ]] || return 0
+    [[ "${ODO_INIT_HARBOR}" == "yes" ]] || {
+	cd odo-harbor
+        docker-compose up -d
+	return 0
+    }
+    cd odo-harbor
+    cp harbor.yml.tmpl harbor.yml
+    harbor_url=$(grep ODO_HARBOR_URL docker-compose.yaml | awk '{print $NF}')
+    harbor_host=$(echo ${harbor_url} | awk -F '://' '{print $2}' | awk -F ':' '{print $1}')
+    harbor_port=$(echo ${harbor_url} | awk -F '://' '{print $2}' | awk -F ':' '{print $2}')
+    sed -i "s#^hostname: .*#hostname: ${harbor_url}#" harbor.yml
+    sed -i "s#port: 80#port: ${harbor_port}#" harbor.yml
+    sed -i 's/^https:/# https:/' harbor.yml
+    sed -i 's/port: 443/# port: 443/' harbor.yml
+    sed -i 's/certificate:/# certificate:/' harbor.yml
+    sed -i 's/private_key:/# private_key:/' harbor.yml
+    sed -i "s#^harbor_admin_password: .*#harbor_admin_password: ${LDAP_PASSWD}#" harbor.yml
+    ./install.sh 
+    cd ..
     return 0
 }
 
@@ -828,7 +846,7 @@ elif [[ "${COMPOSE_CMD}" == "list" ]]; then
     ${DOCKER_COMPOSE} ps
 # Down all containers
 elif [[ "${COMPOSE_CMD}" == "down" ]]; then
-    ${DOCKER_COMPOSE} down
+    ${DOCKER_COMPOSE} down -v
     sleep 2
     ${DOCKER_COMPOSE} ps
 # Generate license or get initial password
