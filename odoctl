@@ -313,12 +313,13 @@ function init_odo_jenkins() {
     while true; do
         sleep 2
         rm -rf ${COOKIES}
-        output=$($CURL -X GET "${jenkins_url}/login?from=%2F" 2>&1)
+        output=$($CURL -X GET "${jenkins_url}/login" 2>&1)
         echo "${output}" | grep HTTP | grep -E '200|302' && break
     done
     echo "Login Jenkins: ${jenkins_login_url}"
     j_password=$(docker exec -it odo-jenkins sh -c 'cat /var/jenkins_home/secrets/initialAdminPassword')
     j_crumb=$(echo "$output" | grep '"Jenkins-Crumb"' | awk -F '"Jenkins-Crumb"' '{print $2}' | awk -F '"' '{print $2}')
+    j_json="{\"from\":\"/\",\"j_username\":\"admin\",\"j_password\":\"${j_password}\",\"Jenkins-Crumb\":\"${j_crumb}\"}"
     output=$($CURL -X POST "${jenkins_security_url}" \
         -H 'Accept: */*' \
         -H 'Content-Type: application/x-www-form-urlencoded' \
@@ -326,7 +327,7 @@ function init_odo_jenkins() {
         --data-urlencode 'j_username=admin' \
         --data-urlencode "j_password=${j_password}" \
         --data-urlencode "Jenkins-Crumb=${j_crumb}" \
-        --data-urlencode "json={\"from\":\"/\",\"j_username\":\"admin\",\"j_password\":\"${j_password}\",\"\$redact\":\"j_password\",\"Jenkins-Crumb\":\"${j_crumb}\"" \
+        --data-urlencode "json=${j_json}" \
         2>&1)
     echo "${output}" | grep HTTP | grep 200 || log_fail "${output}"
     echo "Install Plugins: ${jenkins_plugin_url}"
