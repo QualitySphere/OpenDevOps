@@ -111,13 +111,14 @@ Portal|80<br>443|80<br>443||
 - commands
 ```bash
 ./odoctl <COMMAND>:
-    start     - Up container(s) to start service(s)
-    stop      - Stop container(s) to stop service(s)
-    down      - Down all services
-    restart   - Restart container(s) to restart service(s)
-    list      - List container(s)
-    license   - Generate JIRA/Confluence/Plugin license
-    cleanup   - Cleanup all containers and dirs
+    start           - Up container(s) to start service(s) and init them
+    start_no_init   - Up container(s) to start service(s)
+    stop            - Stop container(s) to stop service(s)
+    down            - Down all services
+    restart         - Restart container(s) to restart service(s)
+    list            - List container(s)
+    license         - Generate JIRA/Confluence/Plugin license
+    cleanup         - Cleanup all containers and dirs
 ```
 
 - services
@@ -175,4 +176,5 @@ Portal|80<br>443|80<br>443||
 - [Jira Software](https://github.com/seoktaehyeon/docker-jira-software/blob/8.11/Dockerfile)
 - [Confluence Server](https://github.com/seoktaehyeon/docker-confluence-server/blob/7.5/Dockerfile)
 - [ODO Portal](odo-portal/dockerBuild/Dockerfile)
+- [ODO Harbor](odo-harbor/dockerBuild/Dockerfile)
 

@@ -757,8 +757,8 @@ function init_odo_harbor() {
         sed -i 's/certificate:/# certificate:/' harbor.yml
         sed -i 's/private_key:/# private_key:/' harbor.yml
         sed -i "s#^harbor_admin_password: .*#harbor_admin_password: ${LDAP_PASSWD}#" harbor.yml
-        sed -i 's#^data_volume: .*#data_volume: ./data#' harbor.yml
-        sed -i 's#location: .*#location: ./log#' harbor.yml
+        sed -i "s#^data_volume: .*#data_volume: ${PWD}/data#" harbor.yml
+        sed -i "s#location: .*#location: ${PWD}/log#" harbor.yml
         echo "Start to install Harbor ..."
         ./install.sh --with-chartmuseum
     else
