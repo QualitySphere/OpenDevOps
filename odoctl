@@ -13,6 +13,7 @@ PG_PASSWD=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-pg' '{print $2}' 
 COMPOSE_CMD="${1-''}"
 COMPOSE_SVC="${2-''}"
 PRODUCT_ID="${3}"
+ODO_HOME=$PWD
 
 ODO_INIT_PG='yes'
 ODO_INIT_LDAP='yes'
@@ -757,15 +758,15 @@ function init_odo_harbor() {
         sed -i 's/certificate:/# certificate:/' harbor.yml
         sed -i 's/private_key:/# private_key:/' harbor.yml
         sed -i "s#^harbor_admin_password: .*#harbor_admin_password: ${LDAP_PASSWD}#" harbor.yml
-        sed -i "s#^data_volume: .*#data_volume: ${PWD}/data#" harbor.yml
-        sed -i "s#location: .*#location: ${PWD}/log#" harbor.yml
+        sed -i "s#^data_volume: .*#data_volume: ${ODO_HOME}/odo-harbor/data#" harbor.yml
+        sed -i "s#location: .*#location: ${ODO_HOME}/odo-harbor/log#" harbor.yml
         echo "Start to install Harbor ..."
         ./install.sh --with-chartmuseum
     else
         cd odo-harbor || log_fail "Cannot change dir to odo-harbor"
         docker-compose up -d
     fi
-    cd ..
+    cd $ODO_HOME
     return 0
 }
 
