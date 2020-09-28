@@ -736,12 +736,18 @@ EOF
 }
 
 function init_odo_harbor() {
-    cd odo-harbor || log_fail "Cannot change dir to odo-harbor"
     if [[ "${ODO_INIT_HARBOR}" == "yes" ]]; then
-        cp harbor.yml.tmpl harbor.yml
         harbor_url=$(grep ODO_HARBOR_URL docker-compose.yaml | awk '{print $NF}')
         harbor_host=$(echo ${harbor_url} | awk -F '://' '{print $2}' | awk -F ':' '{print $1}')
         harbor_port=$(echo ${harbor_url} | awk -F '://' '{print $2}' | awk -F ':' '{print $2}')
+        echo "Waiting for Harbor installer ready ..."
+        while true
+        do
+            sleep 1
+            [[ -f odo-harbor/harbor.yml.tmpl ]] && break
+        done
+        cd odo-harbor || log_fail "Cannot change dir to odo-harbor"
+        cp harbor.yml.tmpl harbor.yml
         sed -i "s#^hostname: .*#hostname: ${harbor_host}#" harbor.yml
         sed -i "s#port: 80#port: ${harbor_port}#" harbor.yml
         sed -i 's/^https:/# https:/' harbor.yml
@@ -751,8 +757,8 @@ function init_odo_harbor() {
         sed -i "s#^harbor_admin_password: .*#harbor_admin_password: ${LDAP_PASSWD}#" harbor.yml
         ./install.sh --with-chartmuseum
     else
+        cd odo-harbor || log_fail "Cannot change dir to odo-harbor"
         docker-compose up -d
-	    return 0
     fi
     cd ..
     return 0
