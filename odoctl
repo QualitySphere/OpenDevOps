@@ -5,7 +5,7 @@ COMPOSE_PROJECT='odo'
 DOCKER_COMPOSE="docker-compose --compatibility -f ${COMPOSE_YAML} -p ${COMPOSE_PROJECT}"
 COMPOSE_CONFIG=$(cat ${COMPOSE_YAML})
 LDAP_DOMAIN=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-ldap-openldap' '{print $2}' | awk -F 'SLAPD_DOMAIN: ' '{print $2}' | awk '{print $1}')
-LDAP_ADMIN="cn=admin,dc=$(echo $LDAP_DOMAIN  | sed 's/\./,dc=/g')"
+LDAP_ADMIN="cn=admin,dc=$(echo $LDAP_DOMAIN | sed 's/\./,dc=/g')"
 LDAP_PASSWD=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-ldap-openldap' '{print $2}' | awk -F 'SLAPD_PASSWORD: ' '{print $2}' | awk '{print $1}')
 PG_USER=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-pg' '{print $2}' | awk -F 'POSTGRES_USER: ' '{print $2}' | awk '{print $1}')
 PG_PASSWD=$(echo $COMPOSE_CONFIG | awk -F 'container_name: odo-pg' '{print $2}' | awk -F 'POSTGRES_PASSWORD: ' '{print $2}' | awk '{print $1}')
@@ -420,9 +420,9 @@ function init_odo_jira() {
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
     output=$($CURL -X POST "${jira_url}/secure/SetupLicense!validateLicense.jspa" \
-	    -H 'Accept: */*' \
-	    -H 'Content-Type: application/x-www-form-urlencoded' \
-	    --data-urlencode "licenseToValidate=${jira_license}" \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "licenseToValidate=${jira_license}" \
         2>&1)
     echo "${output}" | grep HTTP | grep -E '200|302' || log_fail "$output"
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
@@ -452,10 +452,10 @@ function init_odo_jira() {
     get_atl_token=$(echo "${output}" | grep 'Set-Cookie: ' | awk -F 'Set-Cookie: ' '{print $NF}' | awk -F 'atlassian.xsrf.token=' '{print $2}' | awk -F ';' '{print $1}')
     [[ -z "$get_atl_token" ]] || atl_token=$get_atl_token
     output=$($CURL -X POST ${jira_mail_url} \
-	    -H 'Accept: */*' \
-	    -H 'Content-Type: application/x-www-form-urlencoded' \
-	    --data-urlencode "analytics-enabled=" \
-	    --data-urlencode "noemail=true" \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "analytics-enabled=" \
+        --data-urlencode "noemail=true" \
         --data-urlencode "name=admin" \
         --data-urlencode "from=opendevops" \
         --data-urlencode "prefix=[Jira]" \
@@ -491,8 +491,7 @@ function init_odo_conf() {
     conf_user_url="${conf_url}/setup/setupusermanagementchoice.action"
     conf_admin_url="${conf_url}/setup/setupadministrator.action"
     echo "Waiting for Confluence Server[${conf_url}] running ..."
-    while true
-    do
+    while true; do
         sleep 2
         rm -rf ${COOKIES}
         output=$($CURL -X GET ${conf_url}/setup/setupstart.action 2>&1)
@@ -516,7 +515,7 @@ function init_odo_conf() {
     echo "Get server ID: ${conf_url}/setup/setuplicense.action"
     output=$($CURL -X GET ${conf_url}/setup/setuplicense.action 2>&1)
     echo "$output" | grep HTTP | grep -E '200|302' || log_error "$output"
-    conf_server_id=$(echo "$output"| grep 'name="serverId"' | awk -F 'value=' '{print $2}' | awk -F '"' '{print $2}')
+    conf_server_id=$(echo "$output" | grep 'name="serverId"' | awk -F 'value=' '{print $2}' | awk -F '"' '{print $2}')
     echo "${conf_server_id}"
     echo "Generate conf license"
     conf_license=$(docker exec -it odo-conf getConfLicense ${conf_server_id} | tail -8)
@@ -620,93 +619,92 @@ function init_odo_gitlab() {
     gitlab_login_url="${gitlab_url}/users/sign_in"
     gitlab_setting_url="${gitlab_url}/admin/application_settings/general"
     echo "Waiting for GitLab[${gitlab_url}] running ..."
-    while true
-    do
+    while true; do
         sleep 2
         rm -rf ${COOKIES}
         output=$($CURL -X GET ${gitlab_url} 2>&1)
         echo "${output}" | grep HTTP | grep -E '302|200' && {
-            reset_password_token=$(echo "${output}" | \
-	        grep Location | \
-		grep 'reset_password_token' | \
-	        awk -F 'reset_password_token=' '{print $2}' | \
-		sed 's/\r//g')
-            auth_token=$(echo "$output" | \
-		grep 'name="authenticity_token"' | \
-	        awk -F 'name="authenticity_token"' '{print $2}' | \
-	        awk -F 'value="' '{print $2}' | \
-	        awk -F '"' '{print $1}')
+            reset_password_token=$(echo "${output}" |
+                grep Location |
+                grep 'reset_password_token' |
+                awk -F 'reset_password_token=' '{print $2}' |
+                sed 's/\r//g')
+            auth_token=$(echo "$output" |
+                grep 'name="authenticity_token"' |
+                awk -F 'name="authenticity_token"' '{print $2}' |
+                awk -F 'value="' '{print $2}' |
+                awk -F '"' '{print $1}')
             [[ -z "$reset_password_token" ]] || {
                 [[ -z "$auth_token" ]] || {
-		    echo "Auth Token: $auth_token"
-	            break
-	        }
-	    }
+                    echo "Auth Token: $auth_token"
+                    break
+                }
+            }
         }
     done
     echo "Reset GitLab password: ${gitlab_passwd_url}"
     output=$($CURL -X POST ${gitlab_passwd_url} \
-	    -H 'Accept: */*' \
-	    -H 'Content-Type: application/x-www-form-urlencoded' \
-	    --data-urlencode "_method=put" \
-	    --data-urlencode "authenticity_token=${auth_token}" \
-	    --data-urlencode "user[reset_password_token]=${reset_password_token}" \
-	    --data-urlencode "user[password]=${LDAP_PASSWD}" \
-	    --data-urlencode "user[password_confirmation]=${LDAP_PASSWD}" \
-	    2>&1)
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "_method=put" \
+        --data-urlencode "authenticity_token=${auth_token}" \
+        --data-urlencode "user[reset_password_token]=${reset_password_token}" \
+        --data-urlencode "user[password]=${LDAP_PASSWD}" \
+        --data-urlencode "user[password_confirmation]=${LDAP_PASSWD}" \
+        2>&1)
     echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
     echo "Login GitLab: ${gitlab_login_url}"
     output=$($CURL -X GET ${gitlab_login_url} 2>&1)
     echo "${output}" | grep HTTP | grep -E '302|200' && {
-        auth_token=$(echo "$output" | \
-	    grep 'action="/users/sign_in"' -A 5 | \
-	    grep 'name="authenticity_token"' | \
-	    awk -F 'name="authenticity_token"' '{print $2}' | \
-	    awk -F 'value="' '{print $2}' | \
-	    awk -F '"' '{print $1}')
+        auth_token=$(echo "$output" |
+            grep 'action="/users/sign_in"' -A 5 |
+            grep 'name="authenticity_token"' |
+            awk -F 'name="authenticity_token"' '{print $2}' |
+            awk -F 'value="' '{print $2}' |
+            awk -F '"' '{print $1}')
         echo "Auth Token: $auth_token"
     }
     output=$($CURL -X POST ${gitlab_login_url} \
-	    -H 'Accept: */*' \
-	    -H 'Content-Type: application/x-www-form-urlencoded' \
-	    --data-urlencode "authenticity_token=${auth_token}" \
-	    --data-urlencode "user[login]=root" \
-	    --data-urlencode "user[password]=${LDAP_PASSWD}" \
-	    --data-urlencode "user[remember_me]=0" \
-	    2>&1)
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --data-urlencode "authenticity_token=${auth_token}" \
+        --data-urlencode "user[login]=root" \
+        --data-urlencode "user[password]=${LDAP_PASSWD}" \
+        --data-urlencode "user[remember_me]=0" \
+        2>&1)
     echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
     echo "Disable GitLab Sign Up: ${gitlab_setting_url}"
     output=$($CURL -X GET ${gitlab_setting_url} 2>&1)
     echo "${output}" | grep HTTP | grep -E '302|200' && {
-        auth_token=$(echo "$output" | \
-	    grep -A 5 'general#js-signup-settings' | \
-	    grep 'name="authenticity_token"' | \
-	    awk -F 'name="authenticity_token"' '{print $2}' | \
-	    awk -F 'value="' '{print $2}' | \
-	    awk -F '"' '{print $1}')
+        auth_token=$(echo "$output" |
+            grep -A 5 'general#js-signup-settings' |
+            grep 'name="authenticity_token"' |
+            awk -F 'name="authenticity_token"' '{print $2}' |
+            awk -F 'value="' '{print $2}' |
+            awk -F '"' '{print $1}')
         echo "Auth Token: $auth_token"
     }
     output=$($CURL -X POST ${gitlab_setting_url} \
-	    -H 'Accept: */*' \
-	    -H 'Content-Type: multipart/form-data' \
-	    --form "_method=patch" \
-	    --form "authenticity_token=${auth_token}" \
-	    --form "application_setting[signup_enabled]=0" \
-	    --form "application_setting[send_user_confirmation_mail]=0" \
-	    --form "application_setting[minimum_password_length]=8" \
-	    --form "application_setting[domain_whitelist_raw]=" \
-	    --form "application_setting[domain_blacklist_enabled]=0" \
-	    --form "blacklist_type=raw" \
-	    --form "application_setting[domain_blacklist_raw]=" \
-	    --form "application_setting[email_restrictions_enabled]=0" \
-	    --form "application_setting[email_restrictions]=" \
-	    --form "application_setting[after_sign_up_text]=" \
-	    2>&1)
+        -H 'Accept: */*' \
+        -H 'Content-Type: multipart/form-data' \
+        --form "_method=patch" \
+        --form "authenticity_token=${auth_token}" \
+        --form "application_setting[signup_enabled]=0" \
+        --form "application_setting[send_user_confirmation_mail]=0" \
+        --form "application_setting[minimum_password_length]=8" \
+        --form "application_setting[domain_whitelist_raw]=" \
+        --form "application_setting[domain_blacklist_enabled]=0" \
+        --form "blacklist_type=raw" \
+        --form "application_setting[domain_blacklist_raw]=" \
+        --form "application_setting[email_restrictions_enabled]=0" \
+        --form "application_setting[email_restrictions]=" \
+        --form "application_setting[after_sign_up_text]=" \
+        2>&1)
     echo "$output" | grep HTTP | grep -E '200|302' || log_fail "$output"
     rm -rf ${COOKIES}
     echo "Modity config file to enable LDAP"
-    _ldap_base="ou=users,dc=$(echo $LDAP_DOMAIN  | sed 's/\./,dc=/g')"
-    cat <<EOF >> odo-gitlab/config/gitlab.rb
+    _ldap_base="ou=users,dc=$(echo $LDAP_DOMAIN | sed 's/\./,dc=/g')"
+    cat <<EOF >>odo-gitlab/config/gitlab.rb
 #### ODO LDAP Configuration
 gitlab_rails['ldap_enabled'] = true
 gitlab_rails['ldap_servers'] = YAML.load <<-'EOS'
@@ -743,8 +741,7 @@ function init_odo_harbor() {
         harbor_port=$(echo ${harbor_url} | awk -F '://' '{print $2}' | awk -F ':' '{print $2}')
         [[ -z "$harbor_port" ]] && harbor_port=80
         echo "Waiting for Harbor installer ready ..."
-        while true
-        do
+        while true; do
             sleep 1
             [[ -f odo-harbor/harbor.yml.tmpl ]] && break
         done
@@ -823,6 +820,7 @@ if [[ "${COMPOSE_CMD}" == "start" ]]; then
     fi
     sleep 2
     ${DOCKER_COMPOSE} ps
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose ps && cd ..
 # Emm......
 elif [[ "${COMPOSE_CMD}" == "start_no_init" ]]; then
     if [[ "${COMPOSE_SVC}" == "" ]]; then
@@ -843,24 +841,32 @@ elif [[ "${COMPOSE_CMD}" == "start_no_init" ]]; then
     fi
     sleep 2
     ${DOCKER_COMPOSE} ps
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose ps && cd ..
 # Stop the container
 elif [[ "${COMPOSE_CMD}" == "stop" ]]; then
     ${DOCKER_COMPOSE} stop ${COMPOSE_SVC}
+    echo "${COMPOSE_SVC}" | grep -q "harbor" && [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose stop && cd ..
     sleep 2
     ${DOCKER_COMPOSE} ps
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose ps && cd ..
 # Restart the container
 elif [[ "${COMPOSE_CMD}" == "restart" ]]; then
     ${DOCKER_COMPOSE} restart ${COMPOSE_SVC}
+    echo "${COMPOSE_SVC}" | grep -q "harbor" && [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose restart && cd ..
     sleep 2
     ${DOCKER_COMPOSE} ps
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose ps && cd ..
 # List all containers
 elif [[ "${COMPOSE_CMD}" == "list" ]]; then
     ${DOCKER_COMPOSE} ps
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose ps && cd ..
 # Down all containers
 elif [[ "${COMPOSE_CMD}" == "down" ]]; then
     ${DOCKER_COMPOSE} down -v
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose down -v && cd ..
     sleep 2
     ${DOCKER_COMPOSE} ps
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose ps && cd ..
 # Generate license or get initial password
 elif [[ "${COMPOSE_CMD}" == "license" ]]; then
     if [[ "${COMPOSE_SVC}" == "jira" ]]; then
@@ -886,9 +892,11 @@ elif [[ "${COMPOSE_CMD}" == "cleanup" ]]; then
     echo -en "\033[33;1mDo you really wanna to this? \033[0m"
     read -p "[y/N] " _CLEANUP
     [[ "${_CLEANUP,,}" == 'y' ]] || log_error "Abort cleanup"
-    ${DOCKER_COMPOSE} down
+    ${DOCKER_COMPOSE} down -v
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose down -v && cd ..
     sleep 2
     ${DOCKER_COMPOSE} ps
+    [[ -f "odo-harbor/docker-compose.yml" ]] && cd ${ODO_HOME}/odo-harbor && docker-compose ps && cd ..
     # Remove generated dirs
     [[ -f .gitignore ]] && {
         for clean_dir in $(grep 'odo-' .gitignore | grep -v '#'); do
