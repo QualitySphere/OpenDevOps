@@ -24,7 +24,8 @@
 
 ## Framework
 
-![](doc/images/odo-framework.png)
+![Open DevOps Services](doc/images/odo-framework-01.png)
+![ODO Framework](doc/images/odo-framework-02.png)
 
 ## Quick Start
 
@@ -40,9 +41,9 @@ Optimum | 16 core | 32 G
 
 1. Clone project <br>`git clone https://github.com/QualitySphere/OpenDevOps.git`
 2. Change dir to ODO home <br>`cd OpenDevOps`
-3. Enable and update `odo-portal` environment part in `docker-compose.yaml` <br>Change localhost to your server IP or domain <br>![](doc/images/odo-portal-01.png)
+3. Enable and update `odo-portal` environment part in `docker-compose.yaml` <br>Change localhost to your server IP or domain <br>![ODO Portal YAML](doc/images/odo-portal-01.png)
 4. Start ODO services <br>`./odoctl start all`
-5. Access ODO-Portal `http://ODO-HOST` <br>![](doc/images/odo-portal-02.png)
+5. Access ODO-Portal `http://ODO-HOST` <br>![ODO Portal](doc/images/odo-portal-02.png)
 
 #### Configuration
 
@@ -176,5 +177,5 @@ Portal|80<br>443|80<br>443||
 - [Jira Software](https://github.com/seoktaehyeon/docker-jira-software/blob/8.11/Dockerfile)
 - [Confluence Server](https://github.com/seoktaehyeon/docker-confluence-server/blob/7.5/Dockerfile)
 - [ODO Portal](odo-portal/dockerBuild/Dockerfile)
-- [ODO Harbor](odo-harbor/dockerBuild/Dockerfile)
+- [ODO Harbor Installer](odo-harbor/dockerBuild/Dockerfile)
 
