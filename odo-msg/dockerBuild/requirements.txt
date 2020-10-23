@@ -1,0 +1,6 @@
+requests>=2.22.0
+connexion>=2.3.0
+swagger-ui-bundle>=0.0.5
+Flask>=1.1.1
+Flask-Cors>=3.0.8
+Flask-Script>=2.0.6

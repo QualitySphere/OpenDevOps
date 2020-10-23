@@ -105,7 +105,7 @@ services:
     ports:
       - 12080:80
       - 12443:443
-      - 222:222
+      - 222:22
     volumes:
       - ./odo-gitlab/data:/var/opt/gitlab
       - ./odo-gitlab/config:/etc/gitlab
@@ -193,6 +193,22 @@ services:
     environment:
       SECRET_KEY: UGFn28Pp09SiJr60OMXs8e7lAqhJa3O1ztK8tJhMB5Aq1XNF6g
       BOOTSTRAP_TOKEN: KIaSh2O7JR8r6Q0m
+
+  odo-msg:
+    image: registry.cn-hangzhou.aliyuncs.com/bxwill/odo-msg
+    container_name: odo-msg
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '512M'
+    ports:
+      - 13080:80
+    environment:
+      JENKINS_URL: 'http://odo-jenkins'
+      JENKINS_USER: 'admin'
+      JENKINS_TOKEN: ''
 
   odo-portal:
     image: registry.cn-hangzhou.aliyuncs.com/bxwill/odo-portal

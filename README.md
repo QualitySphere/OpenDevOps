@@ -94,7 +94,7 @@ Optimum | 16 core | 32 G
 Service|Port|Container Port|Volume|Container Volume
 ----|----|----|----|----
 OpenLDAP|18389|389|odo-ldap/db<br>odo-ldap/config|/var/lig/ldap<br>/etc/ldap
-PHPLdapAdmin|18880|80|-|-
+phpLDAPadmin|18880|80|-|-
 Self Service Password|18080|80|odo-ldap/ssp/config.inc.php|/var/www/html/conf/config.inc.php
 PostgresQL|18432|5432|odo-pg|/var/lib/postgresql/data
 Jira|8080|8080|odo-jira|/var/atlassian/application-data/jira
